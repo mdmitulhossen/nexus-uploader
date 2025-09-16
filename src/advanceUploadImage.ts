@@ -8,6 +8,7 @@ import path from 'path';
 import os from 'os';
 import { PassThrough } from 'stream';
 import { NexusUploaderConfig } from './types';
+import { S3UploadError, ProcessingError } from './errors';
 
 // This class will hold the S3 client and perform uploads
 export class UploaderService {
@@ -46,8 +47,12 @@ export class UploaderService {
       ContentDisposition: 'inline',
       CacheControl: 'public, max-age=31536000',
     };
-    const data = await this.s3.upload(params).promise();
-    return data.Location.replace(/^http:/, 'https');
+    try {
+        const data = await this.s3.upload(params).promise();
+        return data.Location;
+    } catch (error) {
+        throw new S3UploadError('Failed to upload to S3-compatible storage.', error);
+    }
   }
 
   private async processAndUploadImage(file: Express.Multer.File): Promise<string> {
@@ -77,7 +82,7 @@ export class UploaderService {
              .outputOptions('-c:v libvpx-vp9', '-crf 30', '-b:v 0', '-c:a libopus', '-b:a 128k')
              .on('error', (err) => {
                  fs.promises.unlink(tempInputPath).catch(console.error);
-                 reject(new Error(`Failed to process video: ${err.message}`));
+                 reject(new ProcessingError(`Failed to process video: ${err.message}`));
              })
              .on('end', () => {
                  fs.promises.unlink(tempInputPath).catch(console.error);

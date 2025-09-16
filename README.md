@@ -172,6 +172,64 @@ The default settings are below. You can customize `maxSize` and `mimeTypes` via 
 | **DOCUMENT**| `application/pdf`, `application/msword`, etc.                                   | 10 MB              | None                    |
 | **ANY**    | Any file type                                                                   | 200 MB             | Uploads as-is           |
 
+## Error Handling
+
+`nexus-uploader` throws custom errors to allow for specific error handling. All custom errors extend from the base `NexusUploaderError` class.
+
+- `NexusUploaderError`: The base error class.
+- `InvalidFileTypeError`: Thrown when a file's MIME type is not allowed.
+- `FileSizeExceededError`: Thrown when a file's size is larger than the configured limit.
+- `ProcessingError`: Thrown during media processing (e.g., video transcoding fails).
+- `S3UploadError`: Thrown if the upload to S3-compatible storage fails.
+
+You can handle these errors in your Express error-handling middleware:
+
+```javascript
+import { NexusUploaderError, InvalidFileTypeError, FileSizeExceededError } from 'nexus-uploader';
+import httpStatus from 'http-status';
+
+// ... (your other code)
+
+app.use((err, req, res, next) => {
+  if (err instanceof InvalidFileTypeError) {
+    return res.status(httpStatus.BAD_REQUEST).json({
+      error: 'Invalid File Type',
+      message: err.message,
+    });
+  }
+
+  if (err instanceof FileSizeExceededError) {
+    return res.status(httpStatus.REQUEST_TOO_LONG).json({
+      error: 'File Too Large',
+      message: err.message,
+    });
+  }
+
+  if (err instanceof NexusUploaderError) {
+    return res.status(httpStatus.INTERNAL_SERVER_ERROR).json({
+      error: 'File Upload Failed',
+      message: err.message,
+    });
+  }
+
+  // For other errors
+  console.error(err);
+  res.status(httpStatus.INTERNAL_SERVER_ERROR).json({ error: 'An unexpected error occurred.' });
+});
+```
+
+## Testing
+
+This project uses [Jest](https://jestjs.io/) for automated testing. The tests cover core functionalities, including file type validation, size limits, and error handling.
+
+To run the tests, use the following command:
+
+```bash
+npm test
+```
+
+This will execute all test files located in the `src/__tests__` directory.
+
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.

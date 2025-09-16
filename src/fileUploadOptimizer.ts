@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import multer, { FileFilterCallback } from 'multer';
 import { UploaderService } from './advanceUploadImage';
 import { FileType, NexusUploaderConfig, FileTypeConfig } from './types';
+import { InvalidFileTypeError, FileSizeExceededError } from './errors';
 
 export interface FieldConfig { name: string; maxCount: number; type: FileType | FileType[]; }
 export interface FileUploadConfig { fields: FieldConfig[]; }
@@ -28,7 +29,7 @@ export const createUploadMiddleware = (uploadConfig: FileUploadConfig, uploaderS
 
     const fileFilter = (req: Request, file: Express.Multer.File, cb: FileFilterCallback) => {
         const fieldConfig = fieldConfigMap.get(file.fieldname);
-        if (!fieldConfig) return cb(new Error(`Unexpected file field: ${file.fieldname}`));
+        if (!fieldConfig) return cb(new InvalidFileTypeError(`Unexpected file field: ${file.fieldname}`));
 
         const allowedTypes = Array.isArray(fieldConfig.type) ? fieldConfig.type : [fieldConfig.type];
         if (allowedTypes.includes('ANY')) return cb(null, true);
@@ -37,7 +38,7 @@ export const createUploadMiddleware = (uploadConfig: FileUploadConfig, uploaderS
         if (allowedMimeTypes.includes(file.mimetype)) {
             cb(null, true);
         } else {
-            cb(new Error(`Invalid file type for ${file.fieldname}. Allowed types: ${allowedTypes.join(', ')}.`));
+            cb(new InvalidFileTypeError(`Invalid file type for ${file.fieldname}. Allowed types: ${allowedTypes.join(', ')}.`));
         }
     };
 
@@ -60,7 +61,7 @@ export const createUploadMiddleware = (uploadConfig: FileUploadConfig, uploaderS
                         });
                         const limit = fileTypeCategory ? fileTypeConfig[fileTypeCategory].maxSize : fileTypeConfig.DOCUMENT.maxSize;
                         if (file.size > limit) {
-                            throw new Error(`${fileTypeCategory || 'File'} for field '${fieldName}' cannot exceed ${limit / 1024 / 1024} MB.`);
+                            throw new FileSizeExceededError(`${fileTypeCategory || 'File'} for field '${fieldName}' cannot exceed ${limit / 1024 / 1024} MB.`);
                         }
                         return uploaderService.optimizedUpload(file);
                     });
