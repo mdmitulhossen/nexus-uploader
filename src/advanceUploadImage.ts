@@ -7,24 +7,24 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 import { PassThrough } from 'stream';
-import { S3Config } from './types';
+import { NexusUploaderConfig } from './types';
 
 // This class will hold the S3 client and perform uploads
 export class UploaderService {
   private s3: AWS.S3;
-  private config: S3Config;
+  private config: NexusUploaderConfig;
 
-  constructor(config: S3Config) {
+  constructor(config: NexusUploaderConfig) {
     this.config = config;
-    const spacesEndpoint = new AWS.Endpoint(config.endpoint);
+    const spacesEndpoint = new AWS.Endpoint(config.s3.endpoint);
     this.s3 = new AWS.S3({
       endpoint: spacesEndpoint,
-      accessKeyId: config.accessKeyId,
-      secretAccessKey: config.secretAccessKey,
+      accessKeyId: config.s3.accessKeyId,
+      secretAccessKey: config.s3.secretAccessKey,
       s3ForcePathStyle: false,
       signatureVersion: 'v4',
       sslEnabled: true,
-      region: config.region || 'us-east-1',
+      region: config.s3.region || 'us-east-1',
     });
   }
 
@@ -38,7 +38,7 @@ export class UploaderService {
     mimeType: string,
   ): Promise<string> {
     const params = {
-      Bucket: this.config.bucket,
+      Bucket: this.config.s3.bucket,
       Key: fileKey,
       Body: stream,
       ACL: 'public-read',

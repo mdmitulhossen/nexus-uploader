@@ -7,6 +7,14 @@ export interface S3Config {
   region?: string;
 }
 
+export type FileType = 'IMAGE' | 'VIDEO' | 'DOCUMENT' | 'ANY';
+
+export interface FileTypeConfig {
+  mimeTypes: string[];
+  maxSize: number;
+}
+
 export interface NexusUploaderConfig {
   s3: S3Config;
+  fileTypeConfig?: Partial<Record<FileType, Partial<FileTypeConfig>>>;
 }

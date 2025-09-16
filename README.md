@@ -14,7 +14,7 @@ A powerful, stream-based media upload and optimization middleware for Express.js
   - **Images**: Converts images to modern, efficient `.webp` format using `sharp`.
   - **Videos**: Transcodes videos to `.webm` format using `fluent-ffmpeg` for web-optimized streaming.
 - **Stream-Based Processing**: Files are processed as streams to minimize memory footprint, even with large files.
-- **Flexible Configuration**: Easily configure upload fields, file types (`IMAGE`, `VIDEO`, `DOCUMENT`), and size limits.
+- **Flexible Configuration**: Easily configure upload fields, file types (`IMAGE`, `VIDEO`, `DOCUMENT`), and customize size limits and MIME types.
 - **S3-Compatible**: Uploads files directly to any S3-compatible object storage service.
 
 ## Installation
@@ -39,33 +39,43 @@ Here's a quick example of how to use `nexus-uploader` in an Express.js applicati
 
 ```javascript
 import express from 'express';
-import { UploaderService, createUploadMiddleware, FileType } from 'nexus-uploader';
+import { UploaderService, createUploadMiddleware, FileType, NexusUploaderConfig } from 'nexus-uploader';
 import httpStatus from 'http-status';
 
 const app = express();
 
-// 1. Configure S3 Service
-const s3Config = {
-  endpoint: 'your-s3-endpoint', // e.g., 's3.amazonaws.com' or 'fra1.digitaloceanspaces.com'
-  accessKeyId: 'your-access-key',
-  secretAccessKey: 'your-secret-key',
-  bucket: 'your-bucket-name',
+// 1. Configure NexusUploader
+const nexusConfig: NexusUploaderConfig = {
+  s3: {
+    endpoint: 'your-s3-endpoint', // e.g., 's3.amazonaws.com' or 'fra1.digitaloceanspaces.com'
+    accessKeyId: 'your-access-key',
+    secretAccessKey: 'your-secret-key',
+    bucket: 'your-bucket-name',
+  },
+  fileTypeConfig: {
+    IMAGE: {
+      maxSize: 10 * 1024 * 1024, // Override default max size to 10 MB
+    },
+    VIDEO: {
+      maxSize: 150 * 1024 * 1024, // Override default max size to 150 MB
+    }
+  }
 };
 
-const uploaderService = new UploaderService(s3Config);
+const uploaderService = new UploaderService(nexusConfig);
 
-// 2. Configure Upload Middleware
+// 2. Configure Upload Fields
 const uploadConfig = {
   fields: [
-    { name: 'avatar', maxCount: 1, type: 'IMAGE' },
-    { name: 'gallery', maxCount: 5, type: ['IMAGE', 'VIDEO'] },
-    { name: 'resume', maxCount: 1, type: 'DOCUMENT' },
+    { name: 'avatar', maxCount: 1, type: 'IMAGE' as FileType },
+    { name: 'gallery', maxCount: 5, type: ['IMAGE', 'VIDEO'] as FileType[] },
+    { name: 'resume', maxCount: 1, type: 'DOCUMENT' as FileType },
   ],
 };
 
-const uploadMiddleware = createUploadMiddleware(uploadConfig, uploaderService);
+// 3. Create and Apply Middleware
+const uploadMiddleware = createUploadMiddleware(uploadConfig, uploaderService, nexusConfig);
 
-// 3. Apply Middleware to a Route
 app.post('/upload-profile', uploadMiddleware, (req, res) => {
   // After middleware processing, req.body will contain the URLs of the uploaded files.
   console.log('Uploaded file URLs:', req.body);
@@ -101,11 +111,16 @@ When a request with `multipart/form-data` hits the `/upload-profile` endpoint:
 
 ## Configuration
 
-### `UploaderService`
+### `NexusUploaderConfig`
 
-The `UploaderService` class needs an S3 configuration object:
+The main configuration object for `nexus-uploader`.
 
 ```typescript
+interface NexusUploaderConfig {
+  s3: S3Config;
+  fileTypeConfig?: Partial<Record<FileType, Partial<FileTypeConfig>>>;
+}
+
 interface S3Config {
   endpoint: string;
   accessKeyId: string;
@@ -113,11 +128,18 @@ interface S3Config {
   bucket: string;
   region?: string; // Optional, defaults to 'us-east-1'
 }
+
+interface FileTypeConfig {
+  mimeTypes: string[];
+  maxSize: number;
+}
 ```
+
+You can override default file size limits or even MIME types by providing the `fileTypeConfig` property.
 
 ### `createUploadMiddleware`
 
-This function takes two arguments: `uploadConfig` and an instance of `UploaderService`.
+This function takes three arguments: `uploadConfig`, `uploaderService`, and an optional `nexusConfig`.
 
 #### `uploadConfig`
 
@@ -140,6 +162,8 @@ type FileType = 'IMAGE' | 'VIDEO' | 'DOCUMENT' | 'ANY';
 -   **`type`**: Specifies the category of files allowed. This determines which optimization logic is applied and what MIME types are accepted. You can provide a single type or an array of types.
 
 ## File Type Details
+
+The default settings are below. You can customize `maxSize` and `mimeTypes` via the `NexusUploaderConfig`.
 
 | Type       | Allowed MIME Types                                                              | Max Size (Default) | Optimization            |
 | :--------- | :------------------------------------------------------------------------------ | :----------------- | :---------------------- |
