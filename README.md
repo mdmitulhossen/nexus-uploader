@@ -218,6 +218,48 @@ app.use((err, req, res, next) => {
 });
 ```
 
+## Lifecycle Hooks
+
+`nexus-uploader` provides lifecycle hooks to allow you to run custom logic at different stages of the upload process. You can provide these optional functions in the `hooks` property of your `NexusUploaderConfig`.
+
+Available hooks:
+- `onUploadStart(file)`: Called just before a file starts processing and uploading.
+- `onUploadComplete(file, url)`: Called after a file has been successfully uploaded.
+- `onUploadError(error, file)`: Called if an error occurs during the upload process for a specific file.
+
+### Example Usage
+
+This is useful for tasks like tracking upload progress in a database, sending real-time notifications, or logging.
+
+```javascript
+import { NexusUploaderConfig } from 'nexus-uploader';
+
+const nexusConfig: NexusUploaderConfig = {
+  s3: {
+    // ... your s3 config
+  },
+  hooks: {
+    onUploadStart: async (file) => {
+      console.log(`Starting upload for: ${file.originalname}`);
+      // Example: Update database status to 'uploading'
+      // await db.files.update({ where: { id: file.id }, data: { status: 'uploading' } });
+    },
+    onUploadComplete: async (file, url) => {
+      console.log(`Successfully uploaded ${file.originalname} to ${url}`);
+      // Example: Update database with the final URL and status 'completed'
+      // await db.files.update({ where: { id: file.id }, data: { url, status: 'completed' } });
+    },
+    onUploadError: async (error, file) => {
+      console.error(`Error uploading ${file.originalname}:`, error);
+      // Example: Update database status to 'failed'
+      // await db.files.update({ where: { id: file.id }, data: { status: 'failed', error: error.message } });
+    },
+  },
+};
+
+// ... then pass nexusConfig to UploaderService and createUploadMiddleware
+```
+
 ## Testing
 
 This project uses [Jest](https://jestjs.io/) for automated testing. The tests cover core functionalities, including file type validation, size limits, and error handling.

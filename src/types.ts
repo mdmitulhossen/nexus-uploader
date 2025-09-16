@@ -14,7 +14,14 @@ export interface FileTypeConfig {
   maxSize: number;
 }
 
+export interface LifecycleHooks {
+  onUploadStart?: (file: Express.Multer.File) => void | Promise<void>;
+  onUploadComplete?: (file: Express.Multer.File, url: string) => void | Promise<void>;
+  onUploadError?: (error: Error, file: Express.Multer.File) => void | Promise<void>;
+}
+
 export interface NexusUploaderConfig {
   s3: S3Config;
   fileTypeConfig?: Partial<Record<FileType, Partial<FileTypeConfig>>>;
+  hooks?: LifecycleHooks;
 }

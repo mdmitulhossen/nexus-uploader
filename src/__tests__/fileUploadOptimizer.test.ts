@@ -27,6 +27,65 @@ describe('createUploadMiddleware', () => {
         jest.clearAllMocks();
     });
 
+    const createMockFile = (fieldname: string, size: number, mimetype: string): Express.Multer.File => ({
+        fieldname,
+        originalname: 'test.jpg',
+        mimetype,
+        buffer: Buffer.from(''),
+        size,
+        stream: new (require('stream').PassThrough)(),
+        encoding: '7bit',
+        destination: '',
+        filename: '',
+        path: '',
+    });
+
+    it('should call onUploadStart and onUploadComplete hooks on successful upload', async () => {
+        const onUploadStart = jest.fn();
+        const onUploadComplete = jest.fn();
+
+        const nexusConfigWithHooks: NexusUploaderConfig = {
+            ...nexusConfig,
+            hooks: { onUploadStart, onUploadComplete },
+        };
+
+        const uploadConfig: FileUploadConfig = { fields: [{ name: 'avatar', maxCount: 1, type: 'IMAGE' }] };
+        const middleware = createUploadMiddleware(uploadConfig, mockUploaderService, nexusConfigWithHooks);
+        const processAndUpload = middleware[1];
+
+        const file = createMockFile('avatar', 5 * 1024 * 1024, 'image/jpeg');
+        mockRequest.files = { avatar: [file] };
+
+        await processAndUpload(mockRequest as Request, mockResponse as Response, nextFunction);
+
+        expect(onUploadStart).toHaveBeenCalledWith(file);
+        expect(onUploadComplete).toHaveBeenCalledWith(file, 'http://mock-url.com/file.webp');
+        expect(nextFunction).toHaveBeenCalledWith();
+    });
+
+    it('should call onUploadError hook on upload failure', async () => {
+        const onUploadError = jest.fn();
+        const nexusConfigWithHooks: NexusUploaderConfig = {
+            ...nexusConfig,
+            hooks: { onUploadError },
+        };
+
+        const uploadConfig: FileUploadConfig = { fields: [{ name: 'avatar', maxCount: 1, type: 'IMAGE' }] };
+        const middleware = createUploadMiddleware(uploadConfig, mockUploaderService, nexusConfigWithHooks);
+        const processAndUpload = middleware[1];
+
+        const error = new Error('Upload failed');
+        mockUploaderService.optimizedUpload.mockRejectedValueOnce(error);
+
+        const file = createMockFile('avatar', 5 * 1024 * 1024, 'image/jpeg');
+        mockRequest.files = { avatar: [file] };
+
+        await processAndUpload(mockRequest as Request, mockResponse as Response, nextFunction);
+
+        expect(onUploadError).toHaveBeenCalledWith(error, file);
+        expect(nextFunction).toHaveBeenCalledWith(error);
+    });
+
     const nexusConfig: NexusUploaderConfig = {
         s3: {
             endpoint: 'test',

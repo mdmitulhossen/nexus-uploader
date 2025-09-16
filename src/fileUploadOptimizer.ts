@@ -46,6 +46,9 @@ export const createUploadMiddleware = (uploadConfig: FileUploadConfig, uploaderS
 
     const processAndUploadFiles = async (req: Request, res: Response, next: NextFunction) => {
         if (!req.files || typeof req.files !== 'object') return next();
+        
+        const hooks = nexusConfig?.hooks;
+
         try {
             const filesByField = req.files as { [fieldname: string]: Express.Multer.File[] };
             await Promise.all(
@@ -55,15 +58,25 @@ export const createUploadMiddleware = (uploadConfig: FileUploadConfig, uploaderS
                     if (!files || !fieldConfig) return;
 
                     const uploadPromises = files.map(async file => {
-                        const fileTypeCategory = (Array.isArray(fieldConfig.type) ? fieldConfig.type : [fieldConfig.type]).find(type => {
-                            if (type === 'ANY') return true;
-                            return fileTypeConfig[type].mimeTypes.some(mime => file.mimetype.startsWith(mime.split('/')[0]));
-                        });
-                        const limit = fileTypeCategory ? fileTypeConfig[fileTypeCategory].maxSize : fileTypeConfig.DOCUMENT.maxSize;
-                        if (file.size > limit) {
-                            throw new FileSizeExceededError(`${fileTypeCategory || 'File'} for field '${fieldName}' cannot exceed ${limit / 1024 / 1024} MB.`);
+                        try {
+                            await hooks?.onUploadStart?.(file);
+
+                            const fileTypeCategory = (Array.isArray(fieldConfig.type) ? fieldConfig.type : [fieldConfig.type]).find(type => {
+                                if (type === 'ANY') return true;
+                                return fileTypeConfig[type].mimeTypes.some(mime => file.mimetype.startsWith(mime.split('/')[0]));
+                            });
+                            const limit = fileTypeCategory ? fileTypeConfig[fileTypeCategory].maxSize : fileTypeConfig.DOCUMENT.maxSize;
+                            if (file.size > limit) {
+                                throw new FileSizeExceededError(`${fileTypeCategory || 'File'} for field '${fieldName}' cannot exceed ${limit / 1024 / 1024} MB.`);
+                            }
+                            
+                            const url = await uploaderService.optimizedUpload(file);
+                            await hooks?.onUploadComplete?.(file, url);
+                            return url;
+                        } catch (error) {
+                            await hooks?.onUploadError?.(error as Error, file);
+                            throw error; // Re-throw the error to be caught by the outer catch block
                         }
-                        return uploaderService.optimizedUpload(file);
                     });
 
                     const urls = await Promise.all(uploadPromises);
