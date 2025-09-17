@@ -10,7 +10,17 @@ export interface S3Config {
 
 export interface LocalStorageConfig {
   destination: string;
-  baseUrl: string;
+}
+
+export interface GCSStorageConfig {
+  bucket: string;
+  projectId?: string;
+  keyFilename?: string;
+}
+
+export interface AzureStorageConfig {
+  connectionString: string;
+  containerName: string;
 }
 
 export type FileType = 'IMAGE' | 'VIDEO' | 'DOCUMENT' | 'ANY';
