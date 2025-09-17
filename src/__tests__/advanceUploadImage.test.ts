@@ -1,52 +1,52 @@
 import { UploaderService } from '../advanceUploadImage';
-import { S3UploadError } from '../errors';
-import AWS from 'aws-sdk';
+import { IStorageAdapter } from '../storage/storage.interface';
+import { PassThrough, Readable } from 'stream';
 import sharp from 'sharp';
-import ffmpeg from 'fluent-ffmpeg';
-import { PassThrough } from 'stream';
+import ffmpeg, { FfmpegCommand } from 'fluent-ffmpeg';
 
 // Mock dependencies
-jest.mock('aws-sdk');
-jest.mock('sharp');
-jest.mock('fluent-ffmpeg');
-
-const mockS3 = {
-  upload: jest.fn(),
-};
-const mockSharp = {
-  webp: jest.fn().mockReturnThis(),
-  withMetadata: jest.fn().mockReturnThis(),
-  pipe: jest.fn(),
-};
-const mockFfmpeg = jest.fn();
-
-(AWS.S3 as unknown as jest.Mock).mockImplementation(() => mockS3);
-(sharp as unknown as jest.Mock).mockImplementation(() => mockSharp);
-(ffmpeg as unknown as jest.Mock).mockImplementation(() => {
-    const chain = {
-        format: jest.fn().mockReturnThis(),
-        outputOptions: jest.fn().mockReturnThis(),
-        on: jest.fn().mockReturnThis(),
-        pipe: jest.fn(),
-    };
-    mockFfmpeg.getMockImplementation()?.(chain);
-    return chain;
+jest.mock('sharp', () => {
+    // Return a factory function that creates a new mock instance each time
+    return jest.fn(() => {
+        const mockSharpInstance = new PassThrough();
+        const webp = jest.fn().mockReturnThis();
+        const withMetadata = jest.fn().mockReturnThis();
+        Object.assign(mockSharpInstance, { webp, withMetadata });
+        return mockSharpInstance;
+    });
 });
 
+jest.mock('fluent-ffmpeg', () => {
+    // Return a factory function that creates a new mock instance each time
+    return jest.fn(() => {
+        const mockFfmpegInstance: Partial<FfmpegCommand> = {
+            format: jest.fn().mockReturnThis(),
+            outputOptions: jest.fn().mockReturnThis(),
+            on: jest.fn(function(this: FfmpegCommand, event: string, cb: (...args: any[]) => void): FfmpegCommand {
+                if (event === 'end') {
+                    // Simulate async completion
+                    setTimeout(() => cb(null, null), 0);
+                }
+                return this;
+            }),
+            pipe: jest.fn(),
+        };
+        return mockFfmpegInstance as FfmpegCommand;
+    });
+});
+
+
+// Mock storage adapter
+const mockStorageAdapter: jest.Mocked<IStorageAdapter> = {
+  upload: jest.fn(),
+};
 
 describe('UploaderService', () => {
   let uploaderService: UploaderService;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    uploaderService = new UploaderService({
-      s3: {
-        endpoint: 'test-endpoint',
-        accessKeyId: 'test-key',
-        secretAccessKey: 'test-secret',
-        bucket: 'test-bucket',
-      },
-    });
+    uploaderService = new UploaderService(mockStorageAdapter);
   });
 
   describe('optimizedUpload', () => {
@@ -64,17 +64,20 @@ describe('UploaderService', () => {
         stream: new PassThrough(),
       };
 
-      mockS3.upload.mockReturnValue({
-        promise: jest.fn().mockResolvedValue({ Location: 'https://s3.com/image.webp' }),
-      });
+      mockStorageAdapter.upload.mockResolvedValue('https://example.com/image.webp');
 
       const url = await uploaderService.optimizedUpload(file);
-      expect(url).toBe('https://s3.com/image.webp');
-      expect(mockSharp.webp).toHaveBeenCalled();
-      expect(mockS3.upload).toHaveBeenCalled();
+      
+      expect(url).toBe('https://example.com/image.webp');
+      expect(sharp).toHaveBeenCalled();
+      expect(mockStorageAdapter.upload).toHaveBeenCalledWith(
+        expect.stringMatching(/^images\/.*\.webp$/),
+        expect.any(Readable),
+        'image/webp'
+      );
     });
 
-    it('should throw S3UploadError on S3 upload failure', async () => {
+    it('should throw an error on storage upload failure', async () => {
         const file: Express.Multer.File = {
             mimetype: 'image/jpeg',
             originalname: 'test.jpg',
@@ -88,11 +91,62 @@ describe('UploaderService', () => {
             stream: new PassThrough(),
           };
 
-      mockS3.upload.mockReturnValue({
-        promise: jest.fn().mockRejectedValue(new Error('S3 Error')),
-      });
+      mockStorageAdapter.upload.mockRejectedValue(new Error('Storage Error'));
 
-      await expect(uploaderService.optimizedUpload(file)).rejects.toThrow(S3UploadError);
+      await expect(uploaderService.optimizedUpload(file)).rejects.toThrow('Storage Error');
+    });
+
+    it('should handle generic file uploads', async () => {
+        const file: Express.Multer.File = {
+            mimetype: 'application/pdf',
+            originalname: 'document.pdf',
+            buffer: Buffer.from('pdf content'),
+            size: 1024,
+            fieldname: 'doc',
+            encoding: 'utf8',
+            destination: '',
+            filename: '',
+            path: '',
+            stream: new PassThrough(),
+        };
+
+        mockStorageAdapter.upload.mockResolvedValue('https://example.com/document.pdf');
+
+        const url = await uploaderService.optimizedUpload(file);
+
+        expect(url).toBe('https://example.com/document.pdf');
+        expect(mockStorageAdapter.upload).toHaveBeenCalledWith(
+            expect.stringMatching(/^documents\/.*\.pdf$/),
+            expect.any(Readable),
+            'application/pdf'
+        );
+    });
+
+    it('should process and upload a video', async () => {
+        const file: Express.Multer.File = {
+            mimetype: 'video/mp4',
+            originalname: 'test.mp4',
+            buffer: Buffer.from('video content'),
+            size: 1024,
+            fieldname: 'video',
+            encoding: 'utf8',
+            destination: '',
+            filename: '',
+            path: '',
+            stream: new PassThrough(),
+        };
+
+        mockStorageAdapter.upload.mockResolvedValue('https://example.com/video.webm');
+
+        const url = await uploaderService.optimizedUpload(file);
+
+        expect(url).toBe('https://example.com/video.webm');
+        expect(ffmpeg).toHaveBeenCalled();
+        expect(mockStorageAdapter.upload).toHaveBeenCalledWith(
+            expect.stringMatching(/^videos\/.*\.webm$/),
+            expect.any(PassThrough),
+            'video/webm'
+        );
     });
   });
 });

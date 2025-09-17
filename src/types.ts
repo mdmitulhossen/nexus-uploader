@@ -1,10 +1,16 @@
-// src/types.ts
+import { IStorageAdapter } from './storage/storage.interface';
+
 export interface S3Config {
   endpoint: string;
   accessKeyId: string;
   secretAccessKey: string;
   bucket: string;
   region?: string;
+}
+
+export interface LocalStorageConfig {
+  destination: string;
+  baseUrl: string;
 }
 
 export type FileType = 'IMAGE' | 'VIDEO' | 'DOCUMENT' | 'ANY';
@@ -21,7 +27,10 @@ export interface LifecycleHooks {
 }
 
 export interface NexusUploaderConfig {
-  s3: S3Config;
+  storage: IStorageAdapter;
   fileTypeConfig?: Partial<Record<FileType, Partial<FileTypeConfig>>>;
   hooks?: LifecycleHooks;
+  limits?: {
+    fileSize?: number | string;
+  };
 }

@@ -14,10 +14,11 @@ const DEFAULT_FILE_TYPE_CONFIG: Record<FileType, FileTypeConfig> = {
     ANY: { mimeTypes: [], maxSize: 200 * 1024 * 1024 },
 };
 
-export const createUploadMiddleware = (uploadConfig: FileUploadConfig, uploaderService: UploaderService, nexusConfig?: NexusUploaderConfig) => {
+export const createUploadMiddleware = (config: NexusUploaderConfig, uploadConfig: FileUploadConfig) => {
+    const uploaderService = new UploaderService(config.storage);
     const fileTypeConfig = {
         ...DEFAULT_FILE_TYPE_CONFIG,
-        ...(nexusConfig?.fileTypeConfig && Object.entries(nexusConfig.fileTypeConfig).reduce((acc, [key, value]) => {
+        ...(config.fileTypeConfig && Object.entries(config.fileTypeConfig).reduce((acc, [key, value]) => {
             const type = key as FileType;
             acc[type] = { ...DEFAULT_FILE_TYPE_CONFIG[type], ...value };
             return acc;
@@ -47,7 +48,7 @@ export const createUploadMiddleware = (uploadConfig: FileUploadConfig, uploaderS
     const processAndUploadFiles = async (req: Request, res: Response, next: NextFunction) => {
         if (!req.files || typeof req.files !== 'object') return next();
         
-        const hooks = nexusConfig?.hooks;
+        const hooks = config.hooks;
 
         try {
             const filesByField = req.files as { [fieldname: string]: Express.Multer.File[] };
@@ -63,9 +64,13 @@ export const createUploadMiddleware = (uploadConfig: FileUploadConfig, uploaderS
 
                             const fileTypeCategory = (Array.isArray(fieldConfig.type) ? fieldConfig.type : [fieldConfig.type]).find(type => {
                                 if (type === 'ANY') return true;
-                                return fileTypeConfig[type].mimeTypes.some(mime => file.mimetype.startsWith(mime.split('/')[0]));
+                                // Check based on mime type category (e.g., 'image' for 'image/jpeg')
+                                const mimeCategory = file.mimetype.split('/')[0];
+                                const typeMimeCategories = fileTypeConfig[type].mimeTypes.map(m => m.split('/')[0]);
+                                return typeMimeCategories.includes(mimeCategory);
                             });
-                            const limit = fileTypeCategory ? fileTypeConfig[fileTypeCategory].maxSize : fileTypeConfig.DOCUMENT.maxSize;
+                            
+                            const limit = fileTypeCategory ? fileTypeConfig[fileTypeCategory].maxSize : fileTypeConfig.ANY.maxSize;
                             if (file.size > limit) {
                                 throw new FileSizeExceededError(`${fileTypeCategory || 'File'} for field '${fieldName}' cannot exceed ${limit / 1024 / 1024} MB.`);
                             }

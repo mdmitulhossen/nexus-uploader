@@ -1,5 +1,7 @@
 // src/index.ts
-export * from './errors';
 export * from './types';
-export * from './advanceUploadImage';
 export * from './fileUploadOptimizer';
+export * from './errors';
+export { IStorageAdapter } from './storage/storage.interface';
+export { S3StorageAdapter } from './storage/s3.adapter';
+export { LocalStorageAdapter } from './storage/local.adapter';

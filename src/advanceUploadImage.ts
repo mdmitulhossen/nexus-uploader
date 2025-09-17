@@ -1,5 +1,3 @@
-// src/advanceUploadImage.ts
-import AWS from 'aws-sdk';
 import { v4 as uuidv4 } from 'uuid';
 import sharp from 'sharp';
 import ffmpeg from 'fluent-ffmpeg';
@@ -7,52 +5,41 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 import { PassThrough } from 'stream';
-import { NexusUploaderConfig } from './types';
-import { S3UploadError, ProcessingError } from './errors';
+import { IStorageAdapter } from './storage/storage.interface';
+import { ProcessingError } from './errors';
 
-// This class will hold the S3 client and perform uploads
 export class UploaderService {
-  private s3: AWS.S3;
-  private config: NexusUploaderConfig;
+  private storage: IStorageAdapter;
 
-  constructor(config: NexusUploaderConfig) {
-    this.config = config;
-    const spacesEndpoint = new AWS.Endpoint(config.s3.endpoint);
-    this.s3 = new AWS.S3({
-      endpoint: spacesEndpoint,
-      accessKeyId: config.s3.accessKeyId,
-      secretAccessKey: config.s3.secretAccessKey,
-      s3ForcePathStyle: false,
-      signatureVersion: 'v4',
-      sslEnabled: true,
-      region: config.s3.region || 'us-east-1',
-    });
+  constructor(storageAdapter: IStorageAdapter) {
+    this.storage = storageAdapter;
   }
 
   private sanitizeFilename(filename: string): string {
     return filename.replace(/[^a-zA-Z0-9.\-_]/g, '_');
   }
 
-  private async uploadStreamToSpaces(
+  private async uploadStreamToStorage(
     fileKey: string,
     stream: NodeJS.ReadableStream,
     mimeType: string,
   ): Promise<string> {
-    const params = {
-      Bucket: this.config.s3.bucket,
-      Key: fileKey,
-      Body: stream,
-      ACL: 'public-read',
-      ContentType: mimeType,
-      ContentDisposition: 'inline',
-      CacheControl: 'public, max-age=31536000',
-    };
-    try {
-        const data = await this.s3.upload(params).promise();
-        return data.Location;
-    } catch (error) {
-        throw new S3UploadError('Failed to upload to S3-compatible storage.', error);
+      return this.storage.upload(fileKey, stream, mimeType);
+  }
+
+  async optimizedUpload(file: Express.Multer.File): Promise<string> {
+    if (!file) {
+        throw new Error('No file provided for upload.');
     }
+    const fileType = file.mimetype.split('/')[0];
+
+    if (fileType === 'image') {
+      return this.processAndUploadImage(file);
+    }
+    if (fileType === 'video') {
+      return this.processAndUploadVideo(file);
+    }
+    return this.uploadGenericFile(file);
   }
 
   private async processAndUploadImage(file: Express.Multer.File): Promise<string> {
@@ -61,11 +48,13 @@ export class UploaderService {
     const fileKey = `images/${uuidv4()}-${baseName}.webp`;
 
     const transformer = sharp().webp({ quality: 80, effort: 4 }).withMetadata();
-    const sharpStream = new PassThrough();
-    transformer.pipe(sharpStream);
-    sharp(file.buffer).pipe(transformer);
+    
+    const readable = new PassThrough();
+    readable.end(file.buffer);
 
-    return this.uploadStreamToSpaces(fileKey, sharpStream, 'image/webp');
+    const sharpStream = readable.pipe(transformer);
+
+    return this.uploadStreamToStorage(fileKey, sharpStream, 'image/webp');
   }
 
   private async processAndUploadVideo(file: Express.Multer.File): Promise<string> {
@@ -89,7 +78,7 @@ export class UploaderService {
              })
              .pipe(outputStream, { end: true });
 
-         this.uploadStreamToSpaces(fileKey, outputStream, 'video/webm')
+         this.uploadStreamToStorage(fileKey, outputStream, 'video/webm')
              .then(resolve)
              .catch(reject);
      });
@@ -100,20 +89,6 @@ export class UploaderService {
      const fileKey = `documents/${uuidv4()}-${sanitizedOriginalName}`;
      const stream = new PassThrough();
      stream.end(file.buffer);
-     return this.uploadStreamToSpaces(fileKey, stream, file.mimetype);
-  }
-
-  public async optimizedUpload(file: Express.Multer.File): Promise<string> {
-     if (!file) {
-         throw new Error('No file provided for upload.');
-     }
-     const mimeType = file.mimetype;
-     if (mimeType.startsWith('image/')) {
-         return this.processAndUploadImage(file);
-     } else if (mimeType.startsWith('video/')) {
-         return this.processAndUploadVideo(file);
-     } else {
-         return this.uploadGenericFile(file);
-     }
+     return this.uploadStreamToStorage(fileKey, stream, file.mimetype);
   }
 }
