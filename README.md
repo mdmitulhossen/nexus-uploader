@@ -3,11 +3,41 @@
 [![npm version](https://img.shields.io/npm/v/nexus-uploader.svg)](https://www.npmjs.com/package/nexus-uploader)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A powerful, stream-based media upload and optimization middleware for Express.js, supporting S3-compatible storage.
+# Nexus Uploader: The Ultimate File Upload and Optimization Middleware for Node.js & Express
 
-`nexus-uploader` simplifies handling file uploads in your Express applications. It automatically optimizes images and videos, and uploads them to your S3-compatible cloud storage, such as AWS S3 or DigitalOcean Spaces.
+[![npm version](https://img.shields.io/npm/v/nexus-uploader.svg)](https://www.npmjs.com/package/nexus-uploader)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## Features
+A powerful, stream-based media upload and optimization middleware for Express.js, supporting S3-compatible storage. Effortlessly handle image, video, and document uploads with automatic optimization and direct-to-cloud streaming.
+
+`nexus-uploader` simplifies handling file uploads in your Express applications. It automatically optimizes images and videos, and uploads them to your S3-compatible cloud storage, such as AWS S3 or DigitalOcean Spaces. Built for performance, it processes files as streams to keep your application's memory usage low.
+
+## Key Features & Use Cases
+
+`nexus-uploader` is more than just a file uploader; it's a complete solution for media management in your Node.js applications.
+
+### Image Uploader for Node.js
+Handle all your image uploading needs with powerful, on-the-fly optimization. `nexus-uploader` acts as a robust **image uploader for Node.js and Express.js**, automatically converting uploaded images (JPEG, PNG) into the highly efficient `.webp` format using `sharp`. This reduces file sizes, speeds up load times, and improves your application's performance.
+
+- **Automatic WebP Conversion**: Modern format for faster web performance.
+- **Stream-Based Processing**: Handles large images without high memory consumption.
+- **Configurable Limits**: Set custom size limits for image uploads.
+
+### Video Uploader for Node.js
+As a comprehensive **video uploader for Node.js**, this package simplifies handling large video files. It uses `fluent-ffmpeg` to transcode videos into the web-optimized `.webm` format (VP9/Opus), ensuring smooth streaming and playback on modern browsers.
+
+- **Automatic WebM Transcoding**: Best for web-based video streaming.
+- **Efficient Streaming**: Uploads directly to cloud storage without saving temporarily to disk (except for processing).
+- **Large File Support**: Optimized for handling large video files efficiently.
+
+### Document and Generic File Uploader
+`nexus-uploader` is not limited to media. It can function as a generic **document uploader for Node.js**, handling file types like PDF, DOCX, and more. Files that are not images or videos are uploaded to your S3 bucket in their original format, ensuring their integrity.
+
+- **Flexible File Type Support**: Define fields for `DOCUMENT` or `ANY` file type.
+- **Secure Cloud Storage**: All files are stored securely in your S3-compatible bucket.
+- **Easy Configuration**: Specify allowed document types and size limits with ease.
+
+## Core Functionalities
 
 - **Seamless Express.js Integration**: Works as a middleware, making it easy to add to your existing routes.
 - **Advanced Media Optimization**:
@@ -16,6 +46,8 @@ A powerful, stream-based media upload and optimization middleware for Express.js
 - **Stream-Based Processing**: Files are processed as streams to minimize memory footprint, even with large files.
 - **Flexible Configuration**: Easily configure upload fields, file types (`IMAGE`, `VIDEO`, `DOCUMENT`), and customize size limits and MIME types.
 - **S3-Compatible**: Uploads files directly to any S3-compatible object storage service.
+- **Lifecycle Hooks**: Run custom logic at different stages of the upload process (`onUploadStart`, `onUploadComplete`, `onUploadError`).
+- **Advanced Error Handling**: Custom error classes for precise error management.
 
 ## Installation
 
