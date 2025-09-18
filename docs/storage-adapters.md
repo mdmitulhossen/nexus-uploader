@@ -77,6 +77,78 @@ const nexusConfig = {
 ```
 If `baseUrl` is not provided, the adapter will return the absolute file path on the server.
 
+## `GCSStorageAdapter`
+
+Use this adapter to upload files to Google Cloud Storage (GCS).
+
+### Installation
+This adapter requires the `@google-cloud/storage` package.
+```bash
+npm install @google-cloud/storage
+```
+
+### Configuration
+The `GCSStorageAdapter` constructor takes a `GCSStorageConfig` object.
+
+```typescript
+interface GCSStorageConfig {
+  bucket: string;
+  projectId?: string;
+  keyFilename?: string;
+}
+```
+
+### Example
+```javascript
+import { GCSStorageAdapter } from 'nexus-uploader';
+
+const gcsAdapter = new GCSStorageAdapter({
+  bucket: 'your-bucket-name',
+  projectId: 'your-gcp-project-id',
+  keyFilename: '/path/to/service-account.json',
+});
+
+const nexusConfig = {
+  storage: gcsAdapter,
+  // ... other config
+};
+```
+
+## `AzureStorageAdapter`
+
+Use this adapter to upload files to Microsoft Azure Blob Storage.
+
+### Installation
+This adapter requires the `@azure/storage-blob` package.
+```bash
+npm install @azure/storage-blob
+```
+
+### Configuration
+The `AzureStorageAdapter` constructor takes an `AzureStorageConfig` object.
+
+```typescript
+interface AzureStorageConfig {
+  connectionString: string;
+  containerName: string;
+}
+```
+
+### Example
+```javascript
+import { AzureStorageAdapter } from 'nexus-uploader';
+
+const azureAdapter = new AzureStorageAdapter({
+  connectionString: 'your-azure-connection-string',
+  containerName: 'your-container-name',
+});
+
+const nexusConfig = {
+  storage: azureAdapter,
+  // ... other config
+};
+```
+
 ## Creating a Custom Adapter
 
 You can create your own storage adapter by implementing the `IStorageAdapter` interface. This is useful if you want to integrate with a service that isn't supported out-of-the-box (e.g., Google Cloud Storage, Azure Blob Storage).
