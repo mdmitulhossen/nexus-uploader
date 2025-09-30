@@ -22,13 +22,16 @@ Nexus Uploader is a comprehensive file upload system that provides two modes of 
 - **Progress Tracking**: Real-time upload progress
 - **React Components**: Drop-in React components and hooks
 
-## 📦 Packages
+## � Features
 
-| Package | Description | Version |
-|---------|-------------|---------|
-| [`nexus-uploader`](https://www.npmjs.com/package/nexus-uploader) | Express.js middleware | ![npm](https://img.shields.io/npm/v/nexus-uploader.svg) |
-| [`nexus-uploader-core`](https://www.npmjs.com/package/nexus-uploader-core) | Core client library | ![npm](https://img.shields.io/npm/v/nexus-uploader-core.svg) |
-| [`nexus-uploader-react`](https://www.npmjs.com/package/nexus-uploader-react) | React components | ![npm](https://img.shields.io/npm/v/nexus-uploader-react.svg) |
+- **Enterprise Security**: Advanced validation, virus scanning, rate limiting
+- **Performance Optimization**: Redis/memory caching, CDN integration
+- **Dual Upload Modes**: Backend-mediated or direct storage uploads
+- **Chunked Uploads**: Automatic large file handling with resumable uploads
+- **Multiple Storage Options**: S3, Google Cloud, Azure, Local storage
+- **File Optimization**: Automatic WebP images, WebM videos
+- **TypeScript Support**: Full type definitions included
+- **Production Ready**: Comprehensive error handling and logging
 
 ## 📦 Packages
 
@@ -70,6 +73,75 @@ const uploadMiddleware = createUploadMiddleware({
 
 // Use in route
 app.post('/upload', uploadMiddleware, (req, res) => {
+  res.json({ urls: req.body });
+});
+
+app.listen(3000);
+```
+
+### Advanced Security & Performance Setup
+
+```javascript
+const express = require('express');
+const {
+  createUploadMiddleware,
+  createSecurityMiddleware,
+  createPerformanceMiddleware,
+  S3StorageAdapter
+} = require('nexus-uploader');
+
+const app = express();
+
+// Configure storage
+const storage = new S3StorageAdapter({
+  accessKeyId: 'your-access-key',
+  secretAccessKey: 'your-secret-key',
+  bucket: 'your-bucket'
+});
+
+// Security middleware (anti-spoofing, virus scanning, rate limiting)
+const securityMiddlewares = createSecurityMiddleware({
+  validation: {
+    allowedMimeTypes: ['image/*', 'application/pdf'],
+    maxFileSize: 50 * 1024 * 1024, // 50MB
+    enableVirusScan: true,
+    clamAVHost: 'localhost',
+    clamAVPort: 3310
+  },
+  rateLimit: {
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100 // limit each IP to 100 uploads per windowMs
+  },
+  enableLargeFileLimit: true,
+  enableChunkedUploadLimit: true
+});
+
+// Performance middleware (caching, CDN)
+const { middlewares: performanceMiddlewares } = createPerformanceMiddleware({
+  caching: {
+    type: 'redis',
+    redis: { host: 'localhost', port: 6379 },
+    ttl: 3600
+  },
+  cdn: {
+    provider: 'cloudflare',
+    baseUrl: 'https://cdn.yourdomain.com',
+    purgeOnUpload: true
+  },
+  enableFileUrlCaching: true
+});
+
+// Create upload middleware with security and performance
+const uploadMiddleware = createUploadMiddleware({
+  storage,
+  fields: [
+    { name: 'avatar', maxCount: 1, type: 'IMAGE' },
+    { name: 'documents', maxCount: 5, type: ['IMAGE', 'DOCUMENT'] }
+  ]
+});
+
+// Apply middlewares in order
+app.use('/upload', ...securityMiddlewares, ...performanceMiddlewares, uploadMiddleware, (req, res) => {
   res.json({ urls: req.body });
 });
 
@@ -174,7 +246,39 @@ For production applications requiring security, use the **Backend Mode** with pr
 - 🌐 **Direct storage upload** - No backend required
 - 🔐 **Client-side storage config** - Configure credentials in frontend
 
-## 📚 Documentation
+## �️ Security & Performance
+
+### Advanced Validation
+- **MIME Type Spoofing Prevention**: Detects actual file content vs declared type
+- **Virus Scanning**: ClamAV integration for malware detection
+- **File Size Limits**: Configurable per file type and user
+- **Content Analysis**: Deep file inspection before storage
+
+### Rate Limiting
+- **Upload Rate Limits**: Prevent abuse with configurable thresholds
+- **Large File Limits**: Special limits for big file uploads
+- **Chunked Upload Limits**: Control concurrent chunk uploads
+- **IP-based Limiting**: Per-IP address restrictions
+
+### Caching Layer
+- **Redis Support**: High-performance distributed caching
+- **Memory Caching**: Lightweight in-memory cache for development
+- **File URL Caching**: Cache generated file URLs
+- **Upload Session Caching**: Cache chunked upload sessions
+
+### CDN Integration
+- **Cloudflare**: Automatic cache purging on upload
+- **CloudFront**: AWS CloudFront integration
+- **Akamai**: Enterprise CDN support
+- **Custom CDN**: Support for any CDN provider
+
+### Enterprise Features
+- **Audit Logging**: Comprehensive upload activity logging
+- **Compliance Ready**: GDPR and enterprise security standards
+- **Scalable Architecture**: Handle millions of uploads daily
+- **Monitoring**: Built-in metrics and health checks
+
+## �📚 Documentation
 
 - **[Getting Started](./docs/getting-started.md)** - Complete setup guide
 - **[Configuration](./docs/configuration.md)** - All configuration options

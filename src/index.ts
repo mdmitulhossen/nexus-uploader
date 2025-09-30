@@ -8,3 +8,7 @@ export { LocalStorageAdapter } from './storage/local.adapter';
 export { GCSStorageAdapter } from './storage/gcs.adapter';
 export { AzureStorageAdapter } from './storage/azure.adapter';
 export * from './chunkedUpload';
+
+// Security & Performance Enhancements
+export * from './security';
+export * from './performance';

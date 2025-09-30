@@ -61,4 +61,7 @@ export interface NexusUploaderConfig {
   limits?: {
     fileSize?: number | string;
   };
+  // Security & Performance options
+  security?: import('./security').SecurityOptions;
+  performance?: import('./performance').PerformanceOptions;
 }
