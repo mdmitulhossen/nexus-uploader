@@ -22,7 +22,7 @@ Nexus Uploader is a comprehensive file upload system that provides two modes of 
 - **Progress Tracking**: Real-time upload progress
 - **React Components**: Drop-in React components and hooks
 
-## � Features
+## ✨ Key Features
 
 - **Enterprise Security**: Advanced validation, virus scanning, rate limiting
 - **Performance Optimization**: Redis/memory caching, CDN integration
@@ -79,76 +79,7 @@ app.post('/upload', uploadMiddleware, (req, res) => {
 app.listen(3000);
 ```
 
-### Advanced Security & Performance Setup
-
-```javascript
-const express = require('express');
-const {
-  createUploadMiddleware,
-  createSecurityMiddleware,
-  createPerformanceMiddleware,
-  S3StorageAdapter
-} = require('nexus-uploader');
-
-const app = express();
-
-// Configure storage
-const storage = new S3StorageAdapter({
-  accessKeyId: 'your-access-key',
-  secretAccessKey: 'your-secret-key',
-  bucket: 'your-bucket'
-});
-
-// Security middleware (anti-spoofing, virus scanning, rate limiting)
-const securityMiddlewares = createSecurityMiddleware({
-  validation: {
-    allowedMimeTypes: ['image/*', 'application/pdf'],
-    maxFileSize: 50 * 1024 * 1024, // 50MB
-    enableVirusScan: true,
-    clamAVHost: 'localhost',
-    clamAVPort: 3310
-  },
-  rateLimit: {
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100 // limit each IP to 100 uploads per windowMs
-  },
-  enableLargeFileLimit: true,
-  enableChunkedUploadLimit: true
-});
-
-// Performance middleware (caching, CDN)
-const { middlewares: performanceMiddlewares } = createPerformanceMiddleware({
-  caching: {
-    type: 'redis',
-    redis: { host: 'localhost', port: 6379 },
-    ttl: 3600
-  },
-  cdn: {
-    provider: 'cloudflare',
-    baseUrl: 'https://cdn.yourdomain.com',
-    purgeOnUpload: true
-  },
-  enableFileUrlCaching: true
-});
-
-// Create upload middleware with security and performance
-const uploadMiddleware = createUploadMiddleware({
-  storage,
-  fields: [
-    { name: 'avatar', maxCount: 1, type: 'IMAGE' },
-    { name: 'documents', maxCount: 5, type: ['IMAGE', 'DOCUMENT'] }
-  ]
-});
-
-// Apply middlewares in order
-app.use('/upload', ...securityMiddlewares, ...performanceMiddlewares, uploadMiddleware, (req, res) => {
-  res.json({ urls: req.body });
-});
-
-app.listen(3000);
-```
-
-### Frontend-Only Setup (Direct Upload)
+### Frontend-Only Setup
 
 ```bash
 npm install nexus-uploader-react @aws-sdk/client-s3 @aws-sdk/lib-storage
@@ -168,7 +99,7 @@ function App() {
   });
 
   const { uploadFile, progress, isUploading } = useNexusUploader({
-    storage, // Direct storage configuration
+    storage,
     generateFileKey: (file) => `uploads/${Date.now()}-${file.name}`
   });
 
@@ -190,95 +121,254 @@ function App() {
 }
 ```
 
-### File URL Retrieval
+## 🛡️ Enterprise Security & Performance
 
-Access files stored in your backend directly from the frontend:
+### Advanced Security Features
 
-```tsx
-const { getFileUrl, getFileUrls } = useNexusUploader({ baseUrl: '...' });
+```javascript
+const { createSecurityMiddleware } = require('nexus-uploader');
 
-// Get URL for a single file
-const imageUrl = await getFileUrl('user-avatar.jpg');
-
-// Get URLs for multiple files
-const fileUrls = await getFileUrls(['doc1.pdf', 'doc2.pdf']);
-
-// Get signed URLs with expiration
-const signedUrl = await getFileUrl('private-file.pdf', { expiresIn: 3600 });
+const securityMiddlewares = createSecurityMiddleware({
+  validation: {
+    allowedMimeTypes: ['image/*', 'application/pdf'],
+    maxFileSize: 50 * 1024 * 1024, // 50MB
+    enableVirusScan: true,
+    clamAVHost: 'localhost',
+    clamAVPort: 3310
+  },
+  rateLimit: {
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100 // limit each IP to 100 uploads per windowMs
+  }
+});
 ```
 
-## ⚠️ Security Warning
+### Performance Optimization
 
-**Direct Frontend Upload Mode**: When using client-side storage configuration, be aware that storage credentials will be exposed in the browser. This approach is suitable for:
+```javascript
+const { createPerformanceMiddleware } = require('nexus-uploader');
 
-- ✅ **Development/Prototyping**: Quick testing and development
-- ✅ **Public Uploads**: When you want users to upload directly to your storage
-- ✅ **Serverless Applications**: When backend infrastructure is not available
+const { middlewares: performanceMiddlewares } = createPerformanceMiddleware({
+  caching: {
+    type: 'redis',
+    redis: { host: 'localhost', port: 6379 },
+    ttl: 3600
+  },
+  cdn: {
+    provider: 'cloudflare',
+    baseUrl: 'https://cdn.yourdomain.com',
+    purgeOnUpload: true
+  }
+});
+```
 
-**Not recommended for**:
-- ❌ **Production with sensitive data**: Credentials are visible in browser
-- ❌ **Private file uploads**: Consider using backend mode with proper authentication
-- ❌ **Large-scale applications**: Backend mode provides better security and control
+## 🌐 CDN Integration Guide
 
-For production applications requiring security, use the **Backend Mode** with proper authentication and authorization.
+### How CDN Works
 
-## ✨ Features
+CDN (Content Delivery Network) distributes your files across multiple global servers for faster delivery. Nexus Uploader automatically transforms storage URLs to CDN URLs and purges cache when files are updated.
 
-### Backend Features
-- 🔄 **Stream-based processing** - Minimal memory usage
-- 🎯 **File type validation** - Images, videos, documents
-- 📏 **Size limits** - Configurable per file type
-- 🔄 **Automatic optimization** - WebP images, WebM videos
-- ☁️ **Multiple storage adapters** - S3, GCS, Azure, Local
-- 📦 **Chunked uploads** - Resume interrupted uploads
-- 🎣 **Lifecycle hooks** - Custom processing logic
-- 🚨 **Error handling** - Specific error types
+### CDN Benefits
 
-### Frontend Features
-- 🎨 **Customizable UI** - Style components as needed
-- 🖱️ **Drag & drop** - Intuitive file selection
-- 📊 **Progress tracking** - Real-time upload progress
-- 🚨 **Error handling** - User-friendly error messages
-- 📱 **Responsive** - Works on all devices
-- ⚡ **TypeScript** - Full type safety
-- 🔗 **File URL retrieval** - Direct access to stored files (backend mode)
-- 📦 **Chunked uploads** - Resume interrupted uploads (backend mode)
-- 🌐 **Direct storage upload** - No backend required
-- 🔐 **Client-side storage config** - Configure credentials in frontend
+🚀 **Faster Delivery** - Files serve from CDN edge locations closest to users instead of your storage server
+💰 **Cost Savings** - Reduce storage API calls by caching frequently accessed files
+🔄 **Auto Purge** - Cache automatically cleared when new files are uploaded to prevent serving stale content
+🌐 **Global Performance** - Worldwide content delivery with reduced latency
 
-## �️ Security & Performance
+### Supported CDN Providers
 
-### Advanced Validation
-- **MIME Type Spoofing Prevention**: Detects actual file content vs declared type
-- **Virus Scanning**: ClamAV integration for malware detection
-- **File Size Limits**: Configurable per file type and user
-- **Content Analysis**: Deep file inspection before storage
+| Provider | Features | Setup |
+|----------|----------|-------|
+| **Cloudflare** ✅ | Full API integration with automatic cache purging | Requires API token and zone ID |
+| **CloudFront** ✅ | AWS CloudFront integration | Requires distribution ID |
+| **Akamai** ✅ | Enterprise CDN support | Requires API credentials |
+| **Custom** ✅ | Any CDN with custom purge function | Implement your own purge logic |
 
-### Rate Limiting
-- **Upload Rate Limits**: Prevent abuse with configurable thresholds
-- **Large File Limits**: Special limits for big file uploads
-- **Chunked Upload Limits**: Control concurrent chunk uploads
-- **IP-based Limiting**: Per-IP address restrictions
+### CDN Setup Examples
 
-### Caching Layer
-- **Redis Support**: High-performance distributed caching
-- **Memory Caching**: Lightweight in-memory cache for development
-- **File URL Caching**: Cache generated file URLs
-- **Upload Session Caching**: Cache chunked upload sessions
+#### Cloudflare CDN
+```javascript
+const cdnConfig = {
+  provider: 'cloudflare',
+  baseUrl: 'https://cdn.yourdomain.com',
+  apiKey: 'your-cloudflare-api-token',
+  zoneId: 'your-cloudflare-zone-id',
+  purgeOnUpload: true  // Automatically purge cache on upload
+};
+```
 
-### CDN Integration
-- **Cloudflare**: Automatic cache purging on upload
-- **CloudFront**: AWS CloudFront integration
-- **Akamai**: Enterprise CDN support
-- **Custom CDN**: Support for any CDN provider
+#### Custom CDN
+```javascript
+const cdnConfig = {
+  provider: 'custom',
+  baseUrl: 'https://cdn.yourdomain.com',
+  customPurgeFunction: async (fileUrl) => {
+    // Your custom CDN purge logic
+    await fetch('https://your-cdn-api.com/purge', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer your-token' },
+      body: JSON.stringify({ urls: [fileUrl] })
+    });
+  }
+};
+```
 
-### Enterprise Features
-- **Audit Logging**: Comprehensive upload activity logging
-- **Compliance Ready**: GDPR and enterprise security standards
-- **Scalable Architecture**: Handle millions of uploads daily
-- **Monitoring**: Built-in metrics and health checks
+### CDN URL Transformation
 
-## �📚 Documentation
+**Before CDN:**
+```
+https://your-bucket.s3.amazonaws.com/uploads/avatar.jpg
+```
+
+**After CDN:**
+```
+https://cdn.yourdomain.com/uploads/avatar.jpg
+```
+
+## ⚛️ Frontend CDN Integration
+
+For frontend applications, you can manually transform URLs to CDN URLs:
+
+```tsx
+import React from 'react';
+import { useNexusUploader } from 'nexus-uploader-react';
+
+// CDN configuration
+const CDN_BASE_URL = 'https://cdn.yourdomain.com';
+
+function App() {
+  const { uploadFile, getFileUrl } = useNexusUploader({
+    baseUrl: 'http://localhost:3000' // Your backend URL
+  });
+
+  // Transform URL to CDN URL
+  const getCDNUrl = (fileName: string) => {
+    const storageUrl = getFileUrl(fileName);
+    return storageUrl.replace(/https?:\/\/[^\/]+/, CDN_BASE_URL);
+  };
+
+  const handleUpload = async (file: File) => {
+    const result = await uploadFile(file);
+    const cdnUrl = getCDNUrl(result.fileName);
+    console.log('CDN URL:', cdnUrl);
+  };
+
+  return (
+    <div>
+      {/* Your upload UI */}
+    </div>
+  );
+}
+```
+
+## 📋 Complete Setup Examples
+
+### Production-Ready Backend Setup
+
+```javascript
+const express = require('express');
+const {
+  createUploadMiddleware,
+  createSecurityMiddleware,
+  createPerformanceMiddleware,
+  S3StorageAdapter
+} = require('nexus-uploader');
+
+const app = express();
+
+// 1. Storage Configuration
+const storage = new S3StorageAdapter({
+  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  bucket: process.env.S3_BUCKET
+});
+
+// 2. Security Middleware
+const securityMiddlewares = createSecurityMiddleware({
+  validation: {
+    allowedMimeTypes: ['image/*', 'application/pdf'],
+    maxFileSize: 50 * 1024 * 1024,
+    enableVirusScan: true,
+    clamAVHost: process.env.CLAMAV_HOST,
+    clamAVPort: 3310
+  },
+  rateLimit: {
+    windowMs: 15 * 60 * 1000,
+    max: 100
+  }
+});
+
+// 3. Performance Middleware
+const { middlewares: performanceMiddlewares } = createPerformanceMiddleware({
+  caching: {
+    type: 'redis',
+    redis: {
+      host: process.env.REDIS_HOST,
+      port: process.env.REDIS_PORT
+    },
+    ttl: 3600
+  },
+  cdn: {
+    provider: 'cloudflare',
+    baseUrl: process.env.CDN_BASE_URL,
+    apiKey: process.env.CLOUDFLARE_API_KEY,
+    zoneId: process.env.CLOUDFLARE_ZONE_ID,
+    purgeOnUpload: true
+  },
+  enableFileUrlCaching: true
+});
+
+// 4. Upload Middleware
+const uploadMiddleware = createUploadMiddleware({
+  storage,
+  fields: [
+    { name: 'avatar', maxCount: 1, type: 'IMAGE' },
+    { name: 'documents', maxCount: 5, type: ['IMAGE', 'DOCUMENT'] }
+  ]
+});
+
+// 5. Apply All Middlewares
+app.use('/upload', ...securityMiddlewares, ...performanceMiddlewares, uploadMiddleware);
+
+app.post('/upload', (req, res) => {
+  // Files uploaded successfully with CDN URLs
+  res.json({
+    success: true,
+    urls: req.body, // These will be CDN URLs
+    message: 'Files uploaded and optimized!'
+  });
+});
+
+app.listen(3000);
+```
+
+## 🔧 Configuration Options
+
+### Storage Adapters
+
+| Storage | Setup | Features |
+|---------|-------|----------|
+| **AWS S3** | `new S3StorageAdapter({ accessKeyId, secretAccessKey, bucket })` | Full featured, scalable |
+| **Google Cloud** | `new GCSStorageAdapter({ keyFilename, bucketName })` | GCP integration |
+| **Azure** | `new AzureStorageAdapter({ connectionString, containerName })` | Microsoft cloud |
+| **Local** | `new LocalStorageAdapter({ uploadDir: './uploads' })` | Development use |
+
+### File Types
+
+```javascript
+const uploadMiddleware = createUploadMiddleware({
+  storage,
+  fields: [
+    { name: 'images', maxCount: 5, type: 'IMAGE' },           // .jpg, .png, .gif, .webp
+    { name: 'videos', maxCount: 2, type: 'VIDEO' },           // .mp4, .avi, .mov
+    { name: 'documents', maxCount: 10, type: 'DOCUMENT' },    // .pdf, .doc, .txt
+    { name: 'archives', maxCount: 3, type: ['ZIP', 'RAR'] },  // Custom types
+    { name: 'any', maxCount: 1, type: '*' }                   // Any file type
+  ]
+});
+```
+
+## 📚 Documentation
 
 - **[Getting Started](./docs/getting-started.md)** - Complete setup guide
 - **[Configuration](./docs/configuration.md)** - All configuration options
@@ -287,10 +377,48 @@ For production applications requiring security, use the **Backend Mode** with pr
 - **[Frontend Integration](./docs/frontend-integration.md)** - Client libraries
 - **[Error Handling](./docs/error-handling.md)** - Error management
 - **[Lifecycle Hooks](./docs/lifecycle-hooks.md)** - Custom logic
+- **[Security Guide](./docs/security.md)** - Security features
+- **[Performance Guide](./docs/performance.md)** - Caching & CDN
+- **[API Reference](./docs/api-reference.md)** - Complete API docs
+- **[Version Management](./VERSIONING.md)** - Versioning and publishing
+- **[Changelog](./CHANGELOG.md)** - Release history
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+We welcome contributions! Here's how you can help:
+
+### Ways to Contribute
+- 🐛 **Report Bugs** - [Open an issue](https://github.com/mdmitulhossen/nexus-uploader/issues)
+- 💡 **Suggest Features** - [Start a discussion](https://github.com/mdmitulhossen/nexus-uploader/discussions)
+- 📝 **Improve Documentation** - Help make docs clearer
+- 🧪 **Write Tests** - Add test coverage
+- 🔧 **Code Contributions** - Fix bugs or add features
+
+### Development Setup
+```bash
+# Clone the repository
+git clone https://github.com/mdmitulhossen/nexus-uploader.git
+cd nexus-uploader
+
+# Install dependencies
+npm install
+
+# Run tests
+npm test
+
+# Build packages
+npm run build
+
+# Start development
+npm run dev
+```
+
+### Pull Request Process
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
 ## 📄 License
 
@@ -298,6 +426,11 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 ## 🆘 Support
 
-- 📖 [Documentation](./docs/)
-- 🐛 [Issues](https://github.com/mdmitulhossen/nexus-uploader/issues)
-- 💬 [Discussions](https://github.com/mdmitulhossen/nexus-uploader/discussions)
+- 📖 **[Documentation](./docs/)** - Complete guides and API reference
+- 🐛 **[GitHub Issues](https://github.com/mdmitulhossen/nexus-uploader/issues)** - Report bugs
+- 💬 **[GitHub Discussions](https://github.com/mdmitulhossen/nexus-uploader/discussions)** - Ask questions (if enabled)
+- 📧 **Email** - Contact maintainers directly
+
+---
+
+**Made with ❤️ for the developer community**
