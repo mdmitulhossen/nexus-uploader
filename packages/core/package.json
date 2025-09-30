@@ -1,6 +1,6 @@
 {
-  "name": "@nexus-uploader/core",
-  "version": "2.0.0",
+  "name": "nexus-uploader-core",
+  "version": "1.0.1",
   "description": "Core client library for Nexus Uploader - handles API communication and chunking logic",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -28,5 +28,6 @@
   },
   "files": [
     "dist"
-  ]
+  ],
+  "gitHead": "7ff4f9e64f24c02973e9dfb84bcb6fe2daa9c47c"
 }
