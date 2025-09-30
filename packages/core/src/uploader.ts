@@ -87,4 +87,31 @@ export class NexusUploader {
       percentage: (uploadedChunks / totalChunks) * 100,
     };
   }
+
+  /**
+   * Get the URL for a file stored in the configured storage backend
+   * @param fileName - Name/key of the file in storage
+   * @param options - Additional options for URL generation
+   * @returns Promise resolving to the file URL
+   */
+  async getFileUrl(fileName: string, options?: { expiresIn?: number }): Promise<string> {
+    const response = await axios.get(`${this.config.baseUrl}/files/${encodeURIComponent(fileName)}`, {
+      params: options
+    });
+    return response.data.url;
+  }
+
+  /**
+   * Get URLs for multiple files at once
+   * @param fileNames - Array of file names/keys
+   * @param options - Additional options for URL generation
+   * @returns Promise resolving to an object mapping file names to URLs
+   */
+  async getFileUrls(fileNames: string[], options?: { expiresIn?: number }): Promise<Record<string, string>> {
+    const response = await axios.post(`${this.config.baseUrl}/files/batch`, {
+      fileNames,
+      ...options
+    });
+    return response.data.urls;
+  }
 }

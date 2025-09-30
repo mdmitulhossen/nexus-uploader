@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { NexusUploader, UploadConfig, UploadResult } from '@nexus-uploader/core';
+import { NexusUploader, UploadConfig, UploadResult } from 'nexus-uploader-core';
 
 export interface UseNexusUploaderOptions extends Omit<UploadConfig, 'onProgress' | 'onError' | 'onComplete'> {
   onProgress?: (progress: number) => void;
@@ -15,15 +15,15 @@ export function useNexusUploader(options: UseNexusUploaderOptions) {
 
   const uploader = new NexusUploader({
     ...options,
-    onProgress: (p) => {
+    onProgress: (p: number) => {
       setProgress(p);
       options.onProgress?.(p);
     },
-    onError: (err) => {
+    onError: (err: Error) => {
       setError(err);
       options.onError?.(err);
     },
-    onComplete: (url) => {
+    onComplete: (url: string) => {
       // Note: onComplete expects url string, but we have full result
       // We'll handle this in the upload function
     },
@@ -48,6 +48,14 @@ export function useNexusUploader(options: UseNexusUploaderOptions) {
     }
   }, [uploader, options]);
 
+  const getFileUrl = useCallback(async (fileName: string, options?: { expiresIn?: number }) => {
+    return await uploader.getFileUrl(fileName, options);
+  }, [uploader]);
+
+  const getFileUrls = useCallback(async (fileNames: string[], options?: { expiresIn?: number }) => {
+    return await uploader.getFileUrls(fileNames, options);
+  }, [uploader]);
+
   const reset = useCallback(() => {
     setProgress(0);
     setError(null);
@@ -61,6 +69,8 @@ export function useNexusUploader(options: UseNexusUploaderOptions) {
     error,
     isUploading,
     result,
+    getFileUrl,
+    getFileUrls,
     reset,
   };
 }
