@@ -19,6 +19,7 @@ This package simplifies file handling by providing a robust pipeline for validat
 - **Stream-Based Processing:** Handles large files with a minimal memory footprint by processing them as streams.
 - **Advanced Configuration:** Define file types, size limits, and more.
 - **Lifecycle Hooks:** Run custom logic at key stages of the upload process.
+- **Chunked/Resumable Uploads:** Upload large files in chunks and resume interrupted uploads.
 - **Modern Error Handling:** Throws specific, catchable errors for precise control.
 
 ---
@@ -30,6 +31,7 @@ For full installation, configuration, and usage details, please explore our deta
 - **[Getting Started](./docs/getting-started.md)**: A quick-start guide to get you up and running.
 - **[Configuration](./docs/configuration.md)**: A deep dive into all available configuration options.
 - **[Storage Adapters](./docs/storage-adapters.md)**: Learn how to use S3, local storage, Google Cloud Storage, Azure Blob Storage, or create your own adapter.
+- **[Chunked/Resumable Uploads](./docs/chunked-uploads.md)**: Upload large files in chunks with resume capability.
 - **[Error Handling](./docs/error-handling.md)**: Handle upload errors like a pro.
 - **[Lifecycle Hooks](./docs/lifecycle-hooks.md)**: Integrate uploads with your application's logic.
 

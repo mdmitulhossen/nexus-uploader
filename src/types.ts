@@ -23,6 +23,24 @@ export interface AzureStorageConfig {
   containerName: string;
 }
 
+export interface ChunkedUploadConfig {
+  tempDir?: string; // Directory to store temporary chunks
+  maxChunkSize?: number; // Max size per chunk in bytes
+  maxFileSize?: number; // Max total file size
+  cleanupInterval?: number; // Interval to clean up old chunks in ms
+}
+
+export interface ChunkMetadata {
+  uploadId: string;
+  fileName: string;
+  totalChunks: number;
+  uploadedChunks: number[];
+  totalSize: number;
+  mimeType: string;
+  createdAt: Date;
+  lastModified: Date;
+}
+
 export type FileType = 'IMAGE' | 'VIDEO' | 'DOCUMENT' | 'ANY';
 
 export interface FileTypeConfig {
