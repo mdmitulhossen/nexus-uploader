@@ -1,7 +1,7 @@
 {
   "name": "nexus-uploader-react",
-  "version": "1.1.1",
-  "description": "React hooks and components for Nexus Uploader client",
+  "version": "1.2.1",
+  "description": "React hooks and components for Nexus Uploader - seamless file uploads with backend API or direct storage integration",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "license": "MIT",
@@ -15,7 +15,7 @@
     "react-dom": "^16.8.0"
   },
   "dependencies": {
-    "nexus-uploader-core": "^1.1.1"
+    "nexus-uploader-core": "^1.2.1"
   },
   "devDependencies": {
     "@types/react": "^18.2.0",

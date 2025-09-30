@@ -7,13 +7,28 @@
 
 ## 🚀 What is Nexus Uploader?
 
-Nexus Uploader is a comprehensive file upload system that handles everything from server-side processing to client-side integration. It provides:
+Nexus Uploader is a comprehensive file upload system that provides two modes of operation:
 
+### Backend Mode (Traditional)
 - **Express.js Middleware**: Robust server-side file upload handling
 - **Automatic Optimization**: Convert images to WebP, videos to WebM
 - **Multiple Storage Options**: S3, Google Cloud, Azure, Local storage
 - **Chunked Uploads**: Resume interrupted large file uploads
-- **Client Libraries**: React components and hooks for frontend integration
+
+### Frontend-Only Mode (Direct Upload)
+- **No Backend Required**: Upload directly from browser to storage
+- **Client-Side Storage**: Configure storage credentials in frontend
+- **Same Storage Support**: S3, Google Cloud Storage, Azure Blob Storage
+- **Progress Tracking**: Real-time upload progress
+- **React Components**: Drop-in React components and hooks
+
+## 📦 Packages
+
+| Package | Description | Version |
+|---------|-------------|---------|
+| [`nexus-uploader`](https://www.npmjs.com/package/nexus-uploader) | Express.js middleware | ![npm](https://img.shields.io/npm/v/nexus-uploader.svg) |
+| [`nexus-uploader-core`](https://www.npmjs.com/package/nexus-uploader-core) | Core client library | ![npm](https://img.shields.io/npm/v/nexus-uploader-core.svg) |
+| [`nexus-uploader-react`](https://www.npmjs.com/package/nexus-uploader-react) | React components | ![npm](https://img.shields.io/npm/v/nexus-uploader-react.svg) |
 
 ## 📦 Packages
 
@@ -61,19 +76,28 @@ app.post('/upload', uploadMiddleware, (req, res) => {
 app.listen(3000);
 ```
 
-### Frontend Setup (React)
+### Frontend-Only Setup (Direct Upload)
 
 ```bash
-npm install nexus-uploader-react react react-dom
+npm install nexus-uploader-react @aws-sdk/client-s3 @aws-sdk/lib-storage
 ```
 
 ```tsx
 import React from 'react';
-import { useNexusUploader, UploadDropzone } from 'nexus-uploader-react';
+import { useNexusUploader, UploadDropzone, S3ClientStorageAdapter } from 'nexus-uploader-react';
 
 function App() {
+  // Configure storage directly in frontend
+  const storage = new S3ClientStorageAdapter({
+    accessKeyId: 'your-access-key',
+    secretAccessKey: 'your-secret-key',
+    bucket: 'your-bucket',
+    region: 'us-east-1'
+  });
+
   const { uploadFile, progress, isUploading } = useNexusUploader({
-    baseUrl: 'http://localhost:3000'
+    storage, // Direct storage configuration
+    generateFileKey: (file) => `uploads/${Date.now()}-${file.name}`
   });
 
   const handleUpload = async (files) => {
@@ -86,7 +110,7 @@ function App() {
     <UploadDropzone onFilesSelected={handleUpload}>
       {({ isDragActive }) => (
         <div>
-          {isDragActive ? 'Drop files here!' : 'Upload files'}
+          {isDragActive ? 'Drop files here!' : 'Upload files directly to storage'}
         </div>
       )}
     </UploadDropzone>
@@ -111,16 +135,20 @@ const fileUrls = await getFileUrls(['doc1.pdf', 'doc2.pdf']);
 const signedUrl = await getFileUrl('private-file.pdf', { expiresIn: 3600 });
 ```
 
-## 📋 Requirements
+## ⚠️ Security Warning
 
-### Backend
-- **Node.js**: >= 14.0.0
-- **Express.js**: >= 4.0.0
-- **Storage**: AWS S3, Google Cloud Storage, Azure Blob Storage, or Local
+**Direct Frontend Upload Mode**: When using client-side storage configuration, be aware that storage credentials will be exposed in the browser. This approach is suitable for:
 
-### Frontend
-- **React**: >= 16.8.0 (for hooks)
-- **React DOM**: >= 16.8.0
+- ✅ **Development/Prototyping**: Quick testing and development
+- ✅ **Public Uploads**: When you want users to upload directly to your storage
+- ✅ **Serverless Applications**: When backend infrastructure is not available
+
+**Not recommended for**:
+- ❌ **Production with sensitive data**: Credentials are visible in browser
+- ❌ **Private file uploads**: Consider using backend mode with proper authentication
+- ❌ **Large-scale applications**: Backend mode provides better security and control
+
+For production applications requiring security, use the **Backend Mode** with proper authentication and authorization.
 
 ## ✨ Features
 
@@ -141,8 +169,10 @@ const signedUrl = await getFileUrl('private-file.pdf', { expiresIn: 3600 });
 - 🚨 **Error handling** - User-friendly error messages
 - 📱 **Responsive** - Works on all devices
 - ⚡ **TypeScript** - Full type safety
-- 🔗 **File URL retrieval** - Direct access to stored files
-- 📦 **Chunked uploads** - Resume interrupted uploads
+- 🔗 **File URL retrieval** - Direct access to stored files (backend mode)
+- 📦 **Chunked uploads** - Resume interrupted uploads (backend mode)
+- 🌐 **Direct storage upload** - No backend required
+- 🔐 **Client-side storage config** - Configure credentials in frontend
 
 ## 📚 Documentation
 

@@ -1,7 +1,7 @@
 {
   "name": "nexus-uploader-core",
-  "version": "1.1.1",
-  "description": "Core client library for Nexus Uploader - handles API communication and chunking logic",
+  "version": "1.2.1",
+  "description": "Core client library for Nexus Uploader - handles API communication, chunking logic, and direct storage uploads",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "license": "MIT",
@@ -19,6 +19,12 @@
   },
   "dependencies": {
     "axios": "^1.6.0"
+  },
+  "optionalDependencies": {
+    "@aws-sdk/client-s3": "^3.490.0",
+    "@aws-sdk/lib-storage": "^3.490.0",
+    "@google-cloud/storage": "^7.7.0",
+    "@azure/storage-blob": "^12.17.0"
   },
   "devDependencies": {
     "@types/node": "^20.14.2",

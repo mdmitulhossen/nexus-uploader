@@ -1,10 +1,13 @@
 import { useState, useCallback } from 'react';
-import { NexusUploader, UploadConfig, UploadResult } from 'nexus-uploader-core';
+import { NexusUploader, UploadConfig, UploadResult, IClientStorageAdapter } from 'nexus-uploader-core';
 
 export interface UseNexusUploaderOptions extends Omit<UploadConfig, 'onProgress' | 'onError' | 'onComplete'> {
   onProgress?: (progress: number) => void;
   onError?: (error: Error) => void;
   onComplete?: (result: UploadResult) => void;
+  // Direct upload options
+  storage?: IClientStorageAdapter;
+  generateFileKey?: (file: File) => string;
 }
 
 export function useNexusUploader(options: UseNexusUploaderOptions) {

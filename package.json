@@ -1,6 +1,6 @@
 {
   "name": "nexus-uploader",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "A powerful, stream-based media upload and optimization middleware for Express.js, supporting S3-compatible storage.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

@@ -1,6 +1,7 @@
 import axios, { AxiosResponse } from 'axios';
 import { UploadConfig, UploadProgress, UploadResult, UploadConfigInternal } from './types';
 import { createChunks, calculateTotalChunks } from './chunker';
+import { IClientStorageAdapter } from './client-storage';
 
 export class NexusUploader {
   private config: UploadConfigInternal;
@@ -9,42 +10,78 @@ export class NexusUploader {
     this.config = {
       chunkSize: 5 * 1024 * 1024, // 5MB default
       maxRetries: 3,
+      generateFileKey: (file: File) => `${Date.now()}-${file.name}`,
       ...config,
     };
   }
 
   async uploadFile(file: File): Promise<UploadResult> {
     try {
-      // Initialize upload
-      const initResponse = await this.initUpload(file);
-      const { uploadId } = initResponse.data;
-
-      // Upload chunks
-      const totalChunks = calculateTotalChunks(file.size, this.config.chunkSize);
-      let uploadedChunks = 0;
-
-      for (const [index, chunk] of Array.from(createChunks(file, this.config.chunkSize)).entries()) {
-        await this.uploadChunkWithRetry(uploadId, chunk, index);
-        uploadedChunks++;
-        const progress = (uploadedChunks / totalChunks) * 100;
-        this.config.onProgress?.(progress);
+      // Check if direct upload is configured
+      if (this.config.storage) {
+        return await this.uploadDirect(file);
       }
 
-      // Complete upload
-      const completeResponse = await this.completeUpload(uploadId);
-      const { url } = completeResponse.data;
-
-      this.config.onComplete?.(url);
-
-      return {
-        url,
-        fileName: file.name,
-        size: file.size,
-      };
+      // Use backend API for chunked upload
+      return await this.uploadViaBackend(file);
     } catch (error) {
       this.config.onError?.(error as Error);
       throw error;
     }
+  }
+
+  private async uploadDirect(file: File): Promise<UploadResult> {
+    if (!this.config.storage) {
+      throw new Error('Storage adapter not configured for direct upload');
+    }
+
+    const fileKey = this.config.generateFileKey!(file);
+
+    const url = await this.config.storage.upload(fileKey, file, (progress) => {
+      this.config.onProgress?.(progress);
+    });
+
+    const result = {
+      url,
+      fileName: file.name,
+      size: file.size,
+    };
+
+    this.config.onComplete?.(url);
+    return result;
+  }
+
+  private async uploadViaBackend(file: File): Promise<UploadResult> {
+    if (!this.config.baseUrl) {
+      throw new Error('baseUrl is required for backend uploads');
+    }
+
+    // Initialize upload
+    const initResponse = await this.initUpload(file);
+    const { uploadId } = initResponse.data;
+
+    // Upload chunks
+    const totalChunks = calculateTotalChunks(file.size, this.config.chunkSize);
+    let uploadedChunks = 0;
+
+    for (const [index, chunk] of Array.from(createChunks(file, this.config.chunkSize)).entries()) {
+      await this.uploadChunkWithRetry(uploadId, chunk, index);
+      uploadedChunks++;
+      const progress = (uploadedChunks / totalChunks) * 100;
+      this.config.onProgress?.(progress);
+    }
+
+    // Complete upload
+    const completeResponse = await this.completeUpload(uploadId);
+    const { url } = completeResponse.data;
+
+    this.config.onComplete?.(url);
+
+    return {
+      url,
+      fileName: file.name,
+      size: file.size,
+    };
   }
 
   private async initUpload(file: File): Promise<AxiosResponse> {
@@ -95,6 +132,9 @@ export class NexusUploader {
    * @returns Promise resolving to the file URL
    */
   async getFileUrl(fileName: string, options?: { expiresIn?: number }): Promise<string> {
+    if (!this.config.baseUrl) {
+      throw new Error('getFileUrl requires baseUrl to be configured for backend file access');
+    }
     const response = await axios.get(`${this.config.baseUrl}/files/${encodeURIComponent(fileName)}`, {
       params: options
     });
@@ -108,6 +148,9 @@ export class NexusUploader {
    * @returns Promise resolving to an object mapping file names to URLs
    */
   async getFileUrls(fileNames: string[], options?: { expiresIn?: number }): Promise<Record<string, string>> {
+    if (!this.config.baseUrl) {
+      throw new Error('getFileUrls requires baseUrl to be configured for backend file access');
+    }
     const response = await axios.post(`${this.config.baseUrl}/files/batch`, {
       fileNames,
       ...options
