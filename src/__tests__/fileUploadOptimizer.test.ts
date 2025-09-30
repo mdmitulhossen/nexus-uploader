@@ -22,7 +22,7 @@ const mockStorageAdapter: jest.Mocked<IStorageAdapter> = {
 };
 
 describe('createUploadMiddleware', () => {
-    let mockRequest: Partial<Request>;
+    let mockRequest: Partial<Request & { files: { [fieldname: string]: Express.Multer.File[] } }>;
     let mockResponse: Partial<Response>;
     let nextFunction: NextFunction = jest.fn();
 
@@ -80,7 +80,7 @@ describe('createUploadMiddleware', () => {
         const file = createMockFile('avatar', 5 * 1024 * 1024, 'image/jpeg');
         mockRequest.files = { avatar: [file] };
 
-        await processAndUpload(mockRequest as Request, mockResponse as Response, nextFunction);
+        await processAndUpload(mockRequest as any, mockResponse as any, nextFunction);
 
         expect(onUploadStart).toHaveBeenCalledWith(file);
         expect(onUploadComplete).toHaveBeenCalledWith(file, 'http://mock-url.com/file.webp');
@@ -107,7 +107,7 @@ describe('createUploadMiddleware', () => {
         const file = createMockFile('avatar', 5 * 1024 * 1024, 'image/jpeg');
         mockRequest.files = { avatar: [file] };
 
-        await processAndUpload(mockRequest as Request, mockResponse as Response, nextFunction);
+        await processAndUpload(mockRequest as any, mockResponse as any, nextFunction);
 
         expect(onUploadError).toHaveBeenCalledWith(error, file);
         expect(nextFunction).toHaveBeenCalledWith(error);
@@ -118,7 +118,7 @@ describe('createUploadMiddleware', () => {
         const middleware = createUploadMiddleware(nexusConfig, uploadConfig);
         const processAndUpload = middleware[1];
 
-        await processAndUpload(mockRequest as Request, mockResponse as Response, nextFunction);
+        await processAndUpload(mockRequest as any, mockResponse as any, nextFunction);
         expect(nextFunction).toHaveBeenCalledWith();
         expect(mockResponse.status).not.toHaveBeenCalled();
     });
@@ -145,7 +145,7 @@ describe('createUploadMiddleware', () => {
         // The previous error was because `req.headers` was missing.
 
         // Let's try again to call the middleware.
-        multerUpload(mockRequest as Request, mockResponse as Response, (err) => {
+        multerUpload(mockRequest as any, mockResponse as any, (err: any) => {
             // In a real scenario with an invalid file, multer would produce an error.
             // Since we can't inject a file stream easily, we can't trigger the fileFilter this way in the test.
             // The previous approach of extracting the fileFilter was better. Let's fix that.
@@ -179,7 +179,7 @@ describe('createUploadMiddleware', () => {
         const file = createMockFile('avatar', 2 * 1024 * 1024, 'image/jpeg'); // 2MB > 1MB limit
         mockRequest.files = { avatar: [file] };
 
-        await processAndUpload(mockRequest as Request, mockResponse as Response, nextFunction);
+        await processAndUpload(mockRequest as any, mockResponse as any, nextFunction);
         expect(nextFunction).toHaveBeenCalledWith(expect.any(FileSizeExceededError));
     });
 });

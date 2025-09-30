@@ -14,7 +14,7 @@ const DEFAULT_FILE_TYPE_CONFIG: Record<FileType, FileTypeConfig> = {
     ANY: { mimeTypes: [], maxSize: 200 * 1024 * 1024 },
 };
 
-export const createUploadMiddleware = (config: NexusUploaderConfig, uploadConfig: FileUploadConfig) => {
+export const createUploadMiddleware = (config: NexusUploaderConfig, uploadConfig: FileUploadConfig): [any, any] => {
     const uploaderService = new UploaderService(config.storage);
     const fileTypeConfig = {
         ...DEFAULT_FILE_TYPE_CONFIG,
@@ -28,7 +28,7 @@ export const createUploadMiddleware = (config: NexusUploaderConfig, uploadConfig
     const multerFields = uploadConfig.fields.map(field => ({ name: field.name, maxCount: field.maxCount }));
     const fieldConfigMap = new Map<string, FieldConfig>(uploadConfig.fields.map(field => [field.name, field]));
 
-    const fileFilter = (req: Request, file: Express.Multer.File, cb: FileFilterCallback) => {
+    const fileFilter = (req: any, file: Express.Multer.File, cb: FileFilterCallback) => {
         const fieldConfig = fieldConfigMap.get(file.fieldname);
         if (!fieldConfig) return cb(new InvalidFileTypeError(`Unexpected file field: ${file.fieldname}`));
 

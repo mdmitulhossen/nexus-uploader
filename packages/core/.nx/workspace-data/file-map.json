@@ -1,0 +1,40 @@
+{
+  "version": "6.0",
+  "nxVersion": "21.6.2",
+  "pathMappings": {},
+  "nxJsonPlugins": [],
+  "fileMap": {
+    "projectFileMap": {},
+    "nonProjectFiles": [
+      {
+        "file": "package.json",
+        "hash": "7510620722890522854"
+      },
+      {
+        "file": "src/__tests__/uploader.test.ts",
+        "hash": "1931652511515771524"
+      },
+      {
+        "file": "src/chunker.ts",
+        "hash": "11851059861878392093"
+      },
+      {
+        "file": "src/index.ts",
+        "hash": "699744605667061111"
+      },
+      {
+        "file": "src/types.ts",
+        "hash": "270946609282443029"
+      },
+      {
+        "file": "src/uploader.ts",
+        "hash": "10960510428770435579"
+      },
+      {
+        "file": "tsconfig.json",
+        "hash": "12613116127498460123"
+      }
+    ]
+  },
+  "externalNodesHash": "3244421341483603138"
+}

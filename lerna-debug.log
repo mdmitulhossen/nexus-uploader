@@ -1,0 +1,9 @@
+36 error Error: Command failed with exit code 1: npm install --package-lock-only --ignore-scripts
+36 error npm error code EUNSUPPORTEDPROTOCOL
+36 error npm error Unsupported URL Type "workspace:": workspace:*
+36 error npm error A complete log of this run can be found in: C:\Users\Mitul\AppData\Local\npm-cache\_logs\2025-09-30T06_07_09_364Z-debug-0.log
+36 error     at makeError (C:\extra\nexus-uploader\node_modules\execa\lib\error.js:59:11)
+36 error     at handlePromise (C:\extra\nexus-uploader\node_modules\execa\index.js:114:26)
+36 error     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+36 error     at async VersionCommand.updatePackageVersions (C:\extra\nexus-uploader\packages\core\node_modules\lerna\dist\index.js:10368:13)
+36 error     at async Promise.all (index 0)

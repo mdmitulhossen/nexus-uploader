@@ -75,6 +75,68 @@ app.listen(3000);
 
 Ready to get started? **[Check out the full Getting Started guide!](./docs/getting-started.md)**
 
+---
+
+## Frontend Clients
+
+Nexus Uploader now includes client libraries for seamless frontend integration:
+
+### React Client
+
+Use `nexus-uploader-react` for React applications with hooks and customizable components.
+
+```bash
+npm install nexus-uploader-react
+# or
+yarn add nexus-uploader-react
+```
+
+**Basic Usage:**
+
+```tsx
+import React from 'react';
+import { useNexusUploader, UploadDropzone } from '@nexus-uploader/react';
+
+function App() {
+  const { uploadFile, progress, isUploading } = useNexusUploader({
+    baseUrl: 'http://localhost:3000',
+  });
+
+  const handleFileSelect = async (files: FileList) => {
+    for (let i = 0; i < files.length; i++) {
+      await uploadFile(files[i]);
+    }
+  };
+
+  return (
+    <div>
+      <UploadDropzone
+        onFilesSelected={handleFileSelect}
+        className="custom-dropzone"
+        style={{ border: '2px dashed #ccc', padding: '20px' }}
+      >
+        {({ isDragActive }) => (
+          <div>
+            {isDragActive ? 'Drop files here...' : 'Drag & drop files here, or click to select'}
+          </div>
+        )}
+      </UploadDropzone>
+      {isUploading && <progress value={progress} max={100} />}
+    </div>
+  );
+}
+```
+
+**Features:**
+- Customizable dropzone component with drag-and-drop support
+- Progress tracking and error handling
+- Chunked upload support for large files
+- Fully customizable UI via className, style, and render props
+
+For more details, see **[Frontend Integration](./docs/frontend-integration.md)**.
+
+---
+
 ## License
 
 This project is licensed under the MIT License.
