@@ -15,7 +15,7 @@ const DEFAULT_FILE_TYPE_CONFIG: Record<FileType, FileTypeConfig> = {
 };
 
 export const createUploadMiddleware = (config: NexusUploaderConfig, uploadConfig: FileUploadConfig): [any, any] => {
-    const uploaderService = new UploaderService(config.storage);
+    const uploaderService = new UploaderService(config.storage, config.processing);
     const fileTypeConfig = {
         ...DEFAULT_FILE_TYPE_CONFIG,
         ...(config.fileTypeConfig && Object.entries(config.fileTypeConfig).reduce((acc, [key, value]) => {

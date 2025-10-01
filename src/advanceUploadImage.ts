@@ -8,11 +8,27 @@ import { PassThrough } from 'stream';
 import { IStorageAdapter } from './storage/storage.interface';
 import { ProcessingError } from './errors';
 
+// Check if FFmpeg is available
+let ffmpegAvailable = false;
+try {
+  ffmpeg.getAvailableFormats((err, formats) => {
+    if (!err && formats) {
+      ffmpegAvailable = true;
+    }
+  });
+} catch (error) {
+  ffmpegAvailable = false;
+}
+
 export class UploaderService {
   private storage: IStorageAdapter;
+  private enableVideoProcessing: boolean;
+  private enableImageOptimization: boolean;
 
-  constructor(storageAdapter: IStorageAdapter) {
+  constructor(storageAdapter: IStorageAdapter, config?: { enableVideoProcessing?: boolean; enableImageOptimization?: boolean }) {
     this.storage = storageAdapter;
+    this.enableVideoProcessing = config?.enableVideoProcessing ?? true;
+    this.enableImageOptimization = config?.enableImageOptimization ?? true;
   }
 
   private sanitizeFilename(filename: string): string {
@@ -33,10 +49,10 @@ export class UploaderService {
     }
     const fileType = file.mimetype.split('/')[0];
 
-    if (fileType === 'image') {
+    if (fileType === 'image' && this.enableImageOptimization) {
       return this.processAndUploadImage(file);
     }
-    if (fileType === 'video') {
+    if (fileType === 'video' && this.enableVideoProcessing) {
       return this.processAndUploadVideo(file);
     }
     return this.uploadGenericFile(file);
@@ -58,6 +74,15 @@ export class UploaderService {
   }
 
   private async processAndUploadVideo(file: Express.Multer.File): Promise<string> {
+     // Check if FFmpeg is available
+     try {
+       ffmpeg();
+     } catch (error) {
+       // If FFmpeg is not available, upload the video as-is
+       console.warn('FFmpeg not found. Uploading video without processing. Install FFmpeg for video optimization: https://ffmpeg.org/download.html');
+       return this.uploadGenericFile(file);
+     }
+
      const sanitizedOriginalName = this.sanitizeFilename(file.originalname);
      const baseName = path.basename(sanitizedOriginalName, path.extname(sanitizedOriginalName));
      const fileKey = `videos/${uuidv4()}-${baseName}.webm`;
@@ -71,7 +96,9 @@ export class UploaderService {
              .outputOptions('-c:v libvpx-vp9', '-crf 30', '-b:v 0', '-c:a libopus', '-b:a 128k')
              .on('error', (err) => {
                  fs.promises.unlink(tempInputPath).catch(console.error);
-                 reject(new ProcessingError(`Failed to process video: ${err.message}`));
+                 // If FFmpeg processing fails, fall back to uploading the original file
+                 console.warn(`FFmpeg processing failed: ${err.message}. Uploading original video file.`);
+                 this.uploadGenericFile(file).then(resolve).catch(reject);
              })
              .on('end', () => {
                  fs.promises.unlink(tempInputPath).catch(console.error);
@@ -80,7 +107,11 @@ export class UploaderService {
 
          this.uploadStreamToStorage(fileKey, outputStream, 'video/webm')
              .then(resolve)
-             .catch(reject);
+             .catch((err) => {
+                 // If upload fails, try uploading the original file
+                 console.warn(`Processed video upload failed: ${err.message}. Uploading original video file.`);
+                 this.uploadGenericFile(file).then(resolve).catch(reject);
+             });
      });
   }
 

@@ -374,6 +374,31 @@ const uploadMiddleware = createUploadMiddleware({
 });
 ```
 
+### Processing Options
+
+Control media processing and optimization:
+
+```javascript
+const uploadMiddleware = createUploadMiddleware({
+  storage,
+  processing: {
+    enableVideoProcessing: true,    // Convert videos to WebM (requires FFmpeg)
+    enableImageOptimization: true   // Convert images to WebP (requires Sharp)
+  },
+  fields: [
+    { name: 'media', maxCount: 5, type: ['IMAGE', 'VIDEO'] }
+  ]
+});
+```
+
+**Note:** Video processing requires FFmpeg to be installed on your system. If FFmpeg is not available, videos will be uploaded without processing.
+
+**Installing FFmpeg:**
+- **Ubuntu/Debian:** `sudo apt install ffmpeg`
+- **macOS:** `brew install ffmpeg`
+- **Windows:** Download from [https://ffmpeg.org/download.html](https://ffmpeg.org/download.html)
+- **Docker:** Add `RUN apt-get update && apt-get install -y ffmpeg` to your Dockerfile
+
 ## 📚 Documentation
 
 - **[Getting Started](./docs/getting-started.md)** - Complete setup guide

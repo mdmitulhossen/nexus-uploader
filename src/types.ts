@@ -64,4 +64,9 @@ export interface NexusUploaderConfig {
   // Security & Performance options
   security?: import('./security').SecurityOptions;
   performance?: import('./performance').PerformanceOptions;
+  // Processing options
+  processing?: {
+    enableVideoProcessing?: boolean;
+    enableImageOptimization?: boolean;
+  };
 }
