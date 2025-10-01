@@ -7,8 +7,20 @@
     "projectFileMap": {},
     "nonProjectFiles": [
       {
+        "file": "README.md",
+        "hash": "16219132706848411804"
+      },
+      {
+        "file": "package-lock.json",
+        "hash": "5688577687538778627"
+      },
+      {
         "file": "package.json",
-        "hash": "7510620722890522854"
+        "hash": "13986160323548104609"
+      },
+      {
+        "file": "src/__tests__/direct-upload.test.ts",
+        "hash": "7016378511331786967"
       },
       {
         "file": "src/__tests__/uploader.test.ts",
@@ -19,22 +31,42 @@
         "hash": "11851059861878392093"
       },
       {
+        "file": "src/client-storage/azure.client.adapter.ts",
+        "hash": "12402480592447184515"
+      },
+      {
+        "file": "src/client-storage/client-storage.interface.ts",
+        "hash": "14941708254213192115"
+      },
+      {
+        "file": "src/client-storage/gcs.client.adapter.ts",
+        "hash": "6350479005538481356"
+      },
+      {
+        "file": "src/client-storage/index.ts",
+        "hash": "9535037237251132651"
+      },
+      {
+        "file": "src/client-storage/s3.client.adapter.ts",
+        "hash": "16809937468824798735"
+      },
+      {
         "file": "src/index.ts",
-        "hash": "699744605667061111"
+        "hash": "13493769050438773230"
       },
       {
         "file": "src/types.ts",
-        "hash": "270946609282443029"
+        "hash": "3368113421425450731"
       },
       {
         "file": "src/uploader.ts",
-        "hash": "10960510428770435579"
+        "hash": "4833639308972279478"
       },
       {
         "file": "tsconfig.json",
-        "hash": "12613116127498460123"
+        "hash": "779459736477288910"
       }
     ]
   },
-  "externalNodesHash": "3244421341483603138"
+  "externalNodesHash": "6388166196324995528"
 }
