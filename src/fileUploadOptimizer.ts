@@ -8,9 +8,9 @@ export interface FieldConfig { name: string; maxCount: number; type: FileType | 
 export interface FileUploadConfig { fields: FieldConfig[]; }
 
 const DEFAULT_FILE_TYPE_CONFIG: Record<FileType, FileTypeConfig> = {
-    IMAGE: { mimeTypes: ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml', 'image/bmp', 'image/tiff'], maxSize: 25 * 1024 * 1024 },
-    VIDEO: { mimeTypes: ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo', 'video/avi', 'video/mov'], maxSize: 200 * 1024 * 1024 },
-    DOCUMENT: { mimeTypes: ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain', 'application/rtf'], maxSize: 10 * 1024 * 1024 },
+    IMAGE: { mimeTypes: ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml', 'image/bmp', 'image/tiff', 'image/jpe', 'image/pjpeg', 'image/vnd.microsoft.icon', 'image/x-icon', 'image/heic', 'image/heif'], maxSize: 25 * 1024 * 1024 },
+    VIDEO: { mimeTypes: ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo', 'video/avi', 'video/mov', 'video/x-matroska', 'video/x-flv', 'video/x-ms-wmv', 'video/3gpp', 'video/3gpp2'], maxSize: 200 * 1024 * 1024 },
+    DOCUMENT: { mimeTypes: ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain', 'application/rtf', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'], maxSize: 10 * 1024 * 1024 },
     ANY: { mimeTypes: [], maxSize: 200 * 1024 * 1024 },
 };
 
@@ -39,7 +39,9 @@ export const createUploadMiddleware = (config: NexusUploaderConfig, uploadConfig
         if (allowedMimeTypes.includes(file.mimetype)) {
             cb(null, true);
         } else {
-            cb(new InvalidFileTypeError(`Invalid file type for ${file.fieldname}. Allowed types: ${allowedTypes.join(', ')}.`));
+            const typeList = allowedTypes.join(', ');
+            const mimeList = allowedMimeTypes.slice(0, 5).join(', ') + (allowedMimeTypes.length > 5 ? '...' : '');
+            cb(new InvalidFileTypeError(`Invalid file type for ${file.fieldname}. Detected: ${file.mimetype}. Allowed types: ${typeList}. Supported MIME types: ${mimeList}`));
         }
     };
 
