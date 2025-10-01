@@ -51,19 +51,12 @@ export const createUploadMiddleware = (config: NexusUploaderConfig, uploadConfig
     const multerErrorHandler = (req: Request, res: Response, next: NextFunction) => {
         multerUpload(req, res, (err: any) => {
             if (err) {
-                if (err.code === 'LIMIT_FILE_COUNT') {
-                    // This happens when too many files are uploaded for a field
-                    const fieldName = err.field || 'unknown field';
-                    const fieldConfig = fieldConfigMap.get(fieldName);
-                    const maxCount = fieldConfig?.maxCount || 1;
-                    return next(new InvalidFileTypeError(`Too many files uploaded for field '${fieldName}'. Maximum allowed: ${maxCount} file(s).`));
-                }
                 if (err.code === 'LIMIT_UNEXPECTED_FILE') {
                     // This happens when a field is not defined in the configuration
                     return next(new InvalidFileTypeError(`Unexpected file field: ${err.field}. Please check your upload configuration.`));
                 }
-                // For other multer errors, pass them through
-                return next(err);
+                // For other multer errors, pass them through with better messages
+                return next(new InvalidFileTypeError(`Upload error: ${err.message}`));
             }
             next();
         });
@@ -76,6 +69,21 @@ export const createUploadMiddleware = (config: NexusUploaderConfig, uploadConfig
 
         try {
             const filesByField = req.files as { [fieldname: string]: Express.Multer.File[] };
+            
+            // Validate file counts before processing
+            for (const fieldName of Object.keys(filesByField)) {
+                const files = filesByField[fieldName];
+                const fieldConfig = fieldConfigMap.get(fieldName);
+                
+                if (!fieldConfig) {
+                    return next(new InvalidFileTypeError(`Unexpected file field: ${fieldName}. Please check your upload configuration.`));
+                }
+                
+                if (files && files.length > fieldConfig.maxCount) {
+                    return next(new InvalidFileTypeError(`Too many files uploaded for field '${fieldName}'. Maximum allowed: ${fieldConfig.maxCount} file(s). You uploaded: ${files.length} file(s).`));
+                }
+            }
+            
             await Promise.all(
                 Object.keys(filesByField).map(async fieldName => {
                     const files = filesByField[fieldName];
