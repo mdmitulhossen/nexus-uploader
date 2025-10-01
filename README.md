@@ -85,6 +85,43 @@ app.post('/upload', uploadMiddleware, optimizerMiddleware, (req, res) => {
 app.listen(3000);
 ```
 
+## ⚠️ **Critical: Use Both Middlewares**
+
+`createUploadMiddleware` returns **two middlewares** that serve different purposes:
+
+### First Middleware (`uploadMiddleware`)
+- ✅ Parses multipart/form-data files
+- ✅ Validates file types during upload
+- ✅ Rejects invalid file types immediately
+
+### Second Middleware (`optimizerMiddleware`) 
+- ✅ Validates file sizes against limits
+- ✅ Processes and optimizes files (WebP conversion, WebM conversion)
+- ✅ Uploads files to storage
+- ✅ Populates `req.body` with file URLs
+
+### ❌ **Common Mistake**
+```javascript
+// WRONG - Only parses files, no size validation or processing
+const [uploadOnly] = createUploadMiddleware(config, uploadConfig);
+app.post('/upload', uploadOnly, (req, res) => {
+  // Files accepted but never validated for size!
+  res.json({ message: "Files received", urls: req.body }); // req.body will be empty
+});
+```
+
+### ✅ **Correct Usage**
+```javascript
+// RIGHT - Full validation and processing
+const [uploadMiddleware, optimizerMiddleware] = createUploadMiddleware(config, uploadConfig);
+app.post('/upload', uploadMiddleware, optimizerMiddleware, (req, res) => {
+  // Files fully validated, processed, and uploaded
+  res.json({ message: "Upload successful", urls: req.body });
+});
+```
+
+**File size limits and processing only work with the second middleware!**
+
 ### Frontend-Only Setup
 
 ```bash
