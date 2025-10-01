@@ -394,10 +394,15 @@ const uploadMiddleware = createUploadMiddleware({
 **Note:** Video processing requires FFmpeg to be installed on your system. If FFmpeg is not available, videos will be uploaded without processing.
 
 **Installing FFmpeg:**
-- **Ubuntu/Debian:** `sudo apt install ffmpeg`
+- **Ubuntu/Debian:** `sudo apt update && sudo apt install ffmpeg`
 - **macOS:** `brew install ffmpeg`
-- **Windows:** Download from [https://ffmpeg.org/download.html](https://ffmpeg.org/download.html)
+- **Windows:** 
+  - Download from [https://ffmpeg.org/download.html](https://ffmpeg.org/download.html)
+  - Or use Chocolatey: `choco install ffmpeg`
+  - Or use Scoop: `scoop install ffmpeg`
 - **Docker:** Add `RUN apt-get update && apt-get install -y ffmpeg` to your Dockerfile
+
+**About Sharp:** Image optimization (WebP conversion) uses the Sharp library, which is automatically included with nexus-uploader - no additional installation required.
 
 ### Error Handling
 
