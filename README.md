@@ -405,7 +405,7 @@ Nexus Uploader provides clear, user-friendly error messages:
 
 ```javascript
 // File count exceeded
-"Too many files uploaded for field 'gallery'. Maximum allowed: 5 file(s)."
+"Too many files uploaded for field 'gallery'. Maximum allowed: 5 file(s). You uploaded: 6 file(s)."
 
 // Unexpected field
 "Unexpected file field: invalidField. Please check your upload configuration."
