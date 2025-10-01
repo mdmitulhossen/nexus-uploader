@@ -25,7 +25,7 @@ export const createUploadMiddleware = (config: NexusUploaderConfig, uploadConfig
         }, {} as Record<FileType, FileTypeConfig>))
     };
 
-    const multerFields = uploadConfig.fields.map(field => ({ name: field.name, maxCount: field.maxCount }));
+    const multerFields = uploadConfig.fields.map(field => ({ name: field.name, maxCount: undefined })); // Allow unlimited files, we'll validate in processing
     const fieldConfigMap = new Map<string, FieldConfig>(uploadConfig.fields.map(field => [field.name, field]));
 
     const fileFilter = (req: any, file: Express.Multer.File, cb: FileFilterCallback) => {
