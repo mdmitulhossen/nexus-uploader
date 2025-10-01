@@ -129,6 +129,23 @@ function App() {
 
 ## 🛡️ Enterprise Security & Performance
 
+### Middleware Order (CRITICAL)
+
+**Security middleware must be applied AFTER the upload middleware:**
+
+```javascript
+// ❌ WRONG - Security runs before file parsing
+app.use('/upload', ...securityMiddlewares, uploadMiddleware);
+
+// ✅ CORRECT - File parsing first, then security validation
+app.use('/upload', uploadMiddleware, ...securityMiddlewares, ...performanceMiddlewares);
+```
+
+**Why this order matters:**
+- Upload middleware parses multipart/form-data and populates `req.files`
+- Security middleware validates the parsed files
+- If security runs first, `req.files` is undefined and validation is skipped
+
 ### Advanced Security Features
 
 ```javascript
@@ -334,7 +351,8 @@ const uploadMiddleware = createUploadMiddleware({
 });
 
 // 5. Apply All Middlewares
-app.use('/upload', ...securityMiddlewares, ...performanceMiddlewares, uploadMiddleware);
+// ⚠️ IMPORTANT: Upload middleware must come FIRST, then security validation
+app.use('/upload', uploadMiddleware, ...securityMiddlewares, ...performanceMiddlewares);
 
 app.post('/upload', (req, res) => {
   // Files uploaded successfully with CDN URLs
