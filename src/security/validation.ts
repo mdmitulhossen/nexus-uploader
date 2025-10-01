@@ -32,15 +32,29 @@ export class FileValidator {
    * Advanced file validation middleware
    */
   validateFile = (req: Request, res: Response, next: NextFunction) => {
-    const files = req.files as Express.Multer.File[] | Express.Multer.File;
+    // Handle both single file and multiple files (multer.fields() format)
+    let allFiles: Express.Multer.File[] = [];
 
-    if (!files) {
+    if (!req.files) {
       return next();
     }
 
-    const fileArray = Array.isArray(files) ? files : [files];
+    // Check if req.files is from multer.fields() (object with field names as keys)
+    if (typeof req.files === 'object' && !Array.isArray(req.files)) {
+      const filesObj = req.files as { [fieldname: string]: Express.Multer.File[] };
+      allFiles = Object.values(filesObj).flat();
+    } else if (Array.isArray(req.files)) {
+      allFiles = req.files;
+    } else {
+      // Single file
+      allFiles = [req.files as Express.Multer.File];
+    }
 
-    Promise.all(fileArray.map(file => this.validateSingleFile(file)))
+    if (allFiles.length === 0) {
+      return next();
+    }
+
+    Promise.all(allFiles.map(file => this.validateSingleFile(file)))
       .then(() => next())
       .catch(next);
   };
