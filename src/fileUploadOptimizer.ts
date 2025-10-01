@@ -8,9 +8,9 @@ export interface FieldConfig { name: string; maxCount: number; type: FileType | 
 export interface FileUploadConfig { fields: FieldConfig[]; }
 
 const DEFAULT_FILE_TYPE_CONFIG: Record<FileType, FileTypeConfig> = {
-    IMAGE: { mimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/gif'], maxSize: 25 * 1024 * 1024 },
-    VIDEO: { mimeTypes: ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo'], maxSize: 200 * 1024 * 1024 },
-    DOCUMENT: { mimeTypes: ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'], maxSize: 10 * 1024 * 1024 },
+    IMAGE: { mimeTypes: ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml', 'image/bmp', 'image/tiff'], maxSize: 25 * 1024 * 1024 },
+    VIDEO: { mimeTypes: ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo', 'video/avi', 'video/mov'], maxSize: 200 * 1024 * 1024 },
+    DOCUMENT: { mimeTypes: ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain', 'application/rtf'], maxSize: 10 * 1024 * 1024 },
     ANY: { mimeTypes: [], maxSize: 200 * 1024 * 1024 },
 };
 

@@ -63,8 +63,14 @@ const storage = new S3StorageAdapter({
 });
 
 // Create upload middleware
-const uploadMiddleware = createUploadMiddleware({
+const [uploadMiddleware, optimizerMiddleware] = createUploadMiddleware({
   storage,
+  fileTypeConfig: {
+    IMAGE: { maxSize: 10 * 1024 * 1024 }, // 10MB
+    VIDEO: { maxSize: 150 * 1024 * 1024 }, // 150MB
+    DOCUMENT: { maxSize: 25 * 1024 * 1024 } // 25MB
+  }
+}, {
   fields: [
     { name: 'avatar', maxCount: 1, type: 'IMAGE' },
     { name: 'documents', maxCount: 5, type: ['IMAGE', 'DOCUMENT'] }
@@ -72,7 +78,7 @@ const uploadMiddleware = createUploadMiddleware({
 });
 
 // Use in route
-app.post('/upload', uploadMiddleware, (req, res) => {
+app.post('/upload', uploadMiddleware, optimizerMiddleware, (req, res) => {
   res.json({ urls: req.body });
 });
 
