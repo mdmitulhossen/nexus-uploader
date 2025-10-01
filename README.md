@@ -399,6 +399,24 @@ const uploadMiddleware = createUploadMiddleware({
 - **Windows:** Download from [https://ffmpeg.org/download.html](https://ffmpeg.org/download.html)
 - **Docker:** Add `RUN apt-get update && apt-get install -y ffmpeg` to your Dockerfile
 
+### Error Handling
+
+Nexus Uploader provides clear, user-friendly error messages:
+
+```javascript
+// File count exceeded
+"Too many files uploaded for field 'gallery'. Maximum allowed: 5 file(s)."
+
+// Unexpected field
+"Unexpected file field: invalidField. Please check your upload configuration."
+
+// Invalid file type
+"Invalid file type for avatar. Detected: application/octet-stream. Allowed types: IMAGE. Supported MIME types: image/jpeg, image/png..."
+
+// File size exceeded
+"IMAGE for field 'avatar' cannot exceed 25 MB."
+```
+
 ## 📚 Documentation
 
 - **[Getting Started](./docs/getting-started.md)** - Complete setup guide
