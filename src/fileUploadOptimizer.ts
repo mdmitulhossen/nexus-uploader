@@ -47,6 +47,28 @@ export const createUploadMiddleware = (config: NexusUploaderConfig, uploadConfig
 
     const multerUpload = multer({ storage: multer.memoryStorage(), fileFilter }).fields(multerFields);
 
+    // Wrapper middleware to handle multer errors with better messages
+    const multerErrorHandler = (req: Request, res: Response, next: NextFunction) => {
+        multerUpload(req, res, (err: any) => {
+            if (err) {
+                if (err.code === 'LIMIT_FILE_COUNT') {
+                    // This happens when too many files are uploaded for a field
+                    const fieldName = err.field || 'unknown field';
+                    const fieldConfig = fieldConfigMap.get(fieldName);
+                    const maxCount = fieldConfig?.maxCount || 1;
+                    return next(new InvalidFileTypeError(`Too many files uploaded for field '${fieldName}'. Maximum allowed: ${maxCount} file(s).`));
+                }
+                if (err.code === 'LIMIT_UNEXPECTED_FILE') {
+                    // This happens when a field is not defined in the configuration
+                    return next(new InvalidFileTypeError(`Unexpected file field: ${err.field}. Please check your upload configuration.`));
+                }
+                // For other multer errors, pass them through
+                return next(err);
+            }
+            next();
+        });
+    };
+
     const processAndUploadFiles = async (req: Request, res: Response, next: NextFunction) => {
         if (!req.files || typeof req.files !== 'object') return next();
         
@@ -96,5 +118,5 @@ export const createUploadMiddleware = (config: NexusUploaderConfig, uploadConfig
         }
     };
 
-    return [multerUpload, processAndUploadFiles];
+    return [multerErrorHandler, processAndUploadFiles];
 };
